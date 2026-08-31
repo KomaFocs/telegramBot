@@ -4,7 +4,7 @@ from telegram import Update, Message, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from util import *
 
-BOT_TOKEN = "5109319370:AAGJTGeU30zB1duHFl3KizSecp6PAwIDrVY"
+BOT_TOKEN = open("secrets/token.txt", "r").read()
 BOT_USERNAME = "@NeedForBot"
 
 oggi:datetime.date
