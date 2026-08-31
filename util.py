@@ -10,7 +10,7 @@ KOMA_URL = "https://www.furaffinity.net/view/66145507"
 
 
 def connect_to_FA(url:str) -> Response | int:
-	with open("cookies/cookies.txt", "r") as file:
+	with open("secrets/cookies/cookies.txt", "r") as file:
 		lines = file.readlines()
 	COOKIES = {"a": lines[0].strip(), "b": lines[1].strip()}
 	response = requests.get(url, cookies=COOKIES)
