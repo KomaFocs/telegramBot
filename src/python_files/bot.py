@@ -2,9 +2,10 @@ import datetime, io, random
 from enum import Enum
 from telegram import Update, Message, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from src.python_files.funzioni import FUNZIONI
 from util import *
 
-BOT_TOKEN = open("secrets/token.txt", "r").read()
+BOT_TOKEN = open("../../secrets/token.txt", "r").read()
 BOT_USERNAME = "@NeedForBot"
 
 oggi:datetime.date
@@ -44,32 +45,52 @@ async def meglio_command(update:Update, context: ContextTypes.DEFAULT_TYPE) -> N
 @interceptor
 async def img_command(update:Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	img = "rick_astley.jpg"
-	with open("lyrics.txt", "r") as file:
+	with open("../txt_files/lyrics.txt", "r") as file:
 		lines = file.readlines()
 		text = random.choice(lines)
-
 	await update.message.reply_photo(photo=img, caption=text)
 
 @interceptor
 async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-	URL = check_url(context)
-	response = connect_to_FA(URL)
-	if isinstance(response, int):  # se è int, allora lo status code non è 200.
-		reply = f"Errore con la connessione al sito: Status Code {response}.\nRiprova fra qualche minuto; se hai già riprovato e ancora non funziona, inoltra il messaggio a @KomaFocs."
+	# context.args[0]: url:str | ""
+
+	link = "https://www.furaffinity.net/search/q=macro"
+	if not context.args:  # immagine a caso da FA
+		response = send_request_to_FA(link)
+		if isinstance(response, int):
+			reply = f"Errore nella connessione con furaffinity: status code: {response}.\n"
+			reply += "Riprova fra qualche minuto. Se hai già riprovato, inoltra questo messaggio a @KomaFocs."
+			await update.message.reply_text(reply)
+			return
+		# risultato di ricerca: immagine in SD e link relativo
+		a = response.select("b a")
+		link = random.choice(a).get("href")
+		link = "https://furaffinity.net" + link if link.startswith("/") else link
+		print("link: ", link)
+
+	else:  # immagine scelta dall'utente
+		link = check_url(context)
+		if link is None:
+			await update.message.reply_text("Link non valido: deve fornire un link di furaffinity.")
+			return
+
+	response = send_request_to_FA(link)
+	if isinstance(response, int):
+		reply = f"Errore nella connessione con furaffinity: status code: {response}.\n"
+		reply += "Riprova fra qualche minuto. Se hai già riprovato, inoltra questo messaggio a @KomaFocs."
 		await update.message.reply_text(reply)
 		return
 
-	# qui invece abbiamo response come tipo Response, da parsare a BeautifulSoup
-	html_tag_img = parse_html_tag_img(response)  # parsa, trova e restituisce il tag <img>
-	if html_tag_img is None:  # per qualche motivo, non riesce a trovare l'immagine
+	# pagina della submission: immagine in HD e link URI
+	html_tag_img = parse_html_tag_img(response)
+	if html_tag_img is None:
 		reply = "Errore nel recuperare l'immagine dall'URL. Riprova."
 		await update.message.reply_text(reply)
 		return
 
-	# se invece l'immagine è stata trovata, recuperiamo i tag
 	img_tags = get_img_tags(html_tag_img)
 	if img_tags is None:
-		reply = "Errore nel recuperare i tag dall'URL. Riprova."
+		reply = "Errore nel recuperare i tag dall'immagine. Riprova."
 		await update.message.reply_text(reply)
 		return
 
@@ -77,24 +98,29 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 	resp = requests.get(img_src)
 	resp.raise_for_status()
 
+	# scarica la foto HD e salvala in memoria
 	foto = io.BytesIO(resp.content)
-	to_spoil = check_for_blacklist(img_tags)[0]
-	blacklisted_words = check_for_blacklist(img_tags)[1]
+	to_spoil, blacklisted_words = check_for_blacklist(img_tags)
 
 	reply = ""
 	reply += f"Autore: {get_author(response)}\n"
 	reply += f"Tag: {get_img_tags_as_string(img_tags)}\n"
 	reply += f"{blacklisted_words}\n" if to_spoil else ""
-	reply += f"Source: {URL}\n"
+	reply += f"Source: {link}\n"
 
 	await context.bot.send_photo(
 		update.message.chat_id,
-		photo = foto,
-		has_spoiler = to_spoil,
-		caption = reply
-	)
+		photo=foto,
+		has_spoiler=to_spoil,
+		caption=reply
+)
+# Fine metodo
 
 
+@interceptor
+async def retrieve_submissions(update:Update, context:ContextTypes.DEFAULT_TYPE) -> None:
+
+	send_request_to_FA(check_url(context))
 
 def handle_response(text: str) -> str | None:
 	def_parola()
@@ -133,13 +159,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	print(f"\nERROR\nUpdate {update} caused error {context.error}")
 
-async def post_init(app: Application):
-	await app.bot.set_my_commands([
-		BotCommand("start", "Avvia il bot"),
-		BotCommand("meglio", "Ti dico cos'è meglio"),
-		BotCommand("img", "Ti mando un'immagine"),
-		BotCommand("furaffinity", "Ti mando una foto da FurAffinity"),
-    ])
+async def post_init_method(application:Application):
+	commands:list = []
+	for k,v in FUNZIONI.items():
+		commands.append(BotCommand(k,v))
+	await app.bot.set_my_commands(commands)
 
 
 if __name__ == "__main__":
@@ -149,7 +173,7 @@ if __name__ == "__main__":
 	app = (
 		Application.builder()
 		.token(BOT_TOKEN)
-		.post_init(post_init)
+		.post_init(post_init_method)
 		.build()
 	)
 
@@ -158,6 +182,8 @@ if __name__ == "__main__":
 	app.add_handler(CommandHandler("meglio", meglio_command))
 	app.add_handler(CommandHandler("img", img_command))
 	app.add_handler(CommandHandler("furaffinity", furaffinity_command))
+	app.add_handler(CommandHandler("submissions", retrieve_submissions))
+	# app.add_handler(CommandHandler("come_si_usa", come_si_usa))
 
 	# Messages
 	app.add_handler(MessageHandler(filters.TEXT, handle_message))
