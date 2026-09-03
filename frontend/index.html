@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Mini App</title>
+    <!-- SDK Ufficiale Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body
+        {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            text-align: center;
+        }
+        button
+        {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ciao <span id="user-name">Utente</span>! 👋</h1>
+    <p>Questa è la tua prima Mini App Telegram.</p>
+    <button id="main-btn">Invia Dati al Bot</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user)
+        {
+            document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
+        }
+
+        document.getElementById('main-btn').addEventListener('click', () =>
+        {
+            tg.sendData("Dati inviati dalla Mini App!");
+            tg.close();
+        });
+    </script>
+</body>
+</html>
