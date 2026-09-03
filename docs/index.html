@@ -42,8 +42,21 @@
 
         document.getElementById('main-btn').addEventListener('click', () =>
         {
-            tg.sendData("Dati inviati dalla Mini App!");
-            tg.close();
+            tg.showPopup({
+            title: "Conferma operazione",
+            message: "Vuoi inviare questi dati al bot?",
+            buttons: [
+                { id: "yes", type: "default", text: "Sì, invia" },
+                { type: "cancel" }
+            ]
+            }, (buttonId) =>
+            {
+                if (buttonId === "yes")
+                {
+                    tg.openTelegramLink("https://t.me/NeedForBot?start=Confermato");
+                    tg.close();
+                }
+            });
         });
     </script>
 </body>

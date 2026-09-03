@@ -2,6 +2,7 @@ import datetime
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from src.python_files.commands.handle_message import handle_message
+from src.python_files.commands.mini_app import open_app
 from src.python_files.config.lista_comandi import COMANDI
 from src.python_files.errors.error import error
 from src.python_files.jobs.backup import backup_periodico
@@ -35,6 +36,9 @@ if __name__ == "__main__":
 
 	# Backup
 	backup_periodico(app, False)  # cambia in True per attivare i backup
+
+	# Frontend
+	app.add_handler(CommandHandler("app", open_app))
 
 	# Check for messages every <tot> seconds
 	print("Bot pronto. In attesa dei messaggi...")
