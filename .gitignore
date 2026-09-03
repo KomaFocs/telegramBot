@@ -1,2 +1,4 @@
 secrets/
 txt_files/id.txt
+.venv
+*.pyc
