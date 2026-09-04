@@ -23,7 +23,8 @@ class DIR:
 	PYTHON = SRC / "python_files"
 
 	COOKIES_FILE = SECRETS / "cookies.txt"
-	BLACKLIST_FILE = TXT / "blacklisted_words.txt"
+	BLACKLIST_FILE = TXT / "blacklist.txt"
+	WHITELIST_FILE = TXT / "whitelist.txt"
 	TOKEN_FILE = SECRETS / "token.txt"
 
 SOURCE = 'data-fullview-src'
@@ -106,4 +107,24 @@ def check_for_blacklist(img_tags: list[str]) -> tuple[bool, str]:
 
 	return (True, blacklisted_words_found) if match else no_match_found
 
+def get_from_file(file:Path) -> list[str]:
+	if file.is_file():
+		return [word.lower() for word in file.read_text(encoding="utf-8").split()]
+	return []
 
+
+def filter_submissions(images:list[dict], whitelist:list[str]=None, blacklist:list[str]=None) -> list[dict]:
+	if whitelist is None and blacklist is None: return images
+
+	filtered_images = []
+	whitelist_set = {tag.lower() for tag in whitelist}
+	blacklist_set = {tag.lower() for tag in blacklist}
+
+	for single_img in images:
+		tag_set = {t.lower() for t in single_img.get("tags", [])}  # insieme dei tag di un'immagine
+		if tag_set & blacklist_set:  # blacklist -> immagine scartata
+			continue
+		if tag_set & whitelist_set:  # whitelist -> immagine aggiunta
+			filtered_images.append(single_img)
+
+	return filtered_images

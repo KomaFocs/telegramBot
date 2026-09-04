@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update
 from telegram.ext import ContextTypes, CommandHandler, Application
 
-WEB_APP_URL = "https://komafocs.github.io/telegramBot/"
+WEB_APP_URL = "https://komafocs.github.io/telegramBot/?v=2"
 
 async def open_app(update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup([
