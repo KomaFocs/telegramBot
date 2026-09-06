@@ -1,7 +1,7 @@
 import asyncio
 import random
 from telegram.constants import ChatAction
-from src.python_files.utils.constants import DIR, DEFAULT_STUN_DURATION, HIOSHIRU, DELETE_INCOMING_MESSAGES
+from src.python_files.utils.constants import DIR, DEFAULT_STUN_DURATION, HIOSHIRU_FILE, DELETE_INCOMING_MESSAGES
 from src.python_files.utils.cooldown import stun_bot
 from src.python_files.utils.decorators import logger, chat_action, single_execution
 from telegram import Update, Message, Chat
@@ -80,7 +80,7 @@ async def impazzisci(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 	context.user_data[DELETE_INCOMING_MESSAGES] = True
 
-	with open(DIR.SECRETS/HIOSHIRU, "r") as f:
+	with open(DIR.SECRETS / HIOSHIRU_FILE, "r") as f:
 		stickers = [line.strip().split("_")[-1] for line in f if line.strip()]
 
 	sticker_iterator = iter(stickers)

@@ -1,3 +1,4 @@
+import asyncio
 import random, httpx
 from bs4 import ResultSet
 from telegram import Message, Update
@@ -63,8 +64,6 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 			await status.edit_text(reply)
 			return
 
-		await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.UPLOAD_PHOTO)
-
 		img_src = get_image_source(html_tag_img)
 		if img_src is None:
 			await update.message.reply_text("Errore nel recupero della foto.")
@@ -78,7 +77,8 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 			f"Tag: {convert_tags_to_string(img_tags)}\n"
 			f"Source: {link}\n"
 		)
-
+		await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.UPLOAD_PHOTO)
+		await asyncio.sleep(random.uniform(3,4))
 		await context.bot.send_photo(
 			update.message.chat_id,
 			photo=img_src,

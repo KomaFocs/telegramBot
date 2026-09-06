@@ -7,11 +7,11 @@ TITLE:str = 'alt'  # su Furaffinity 'alt' è usato come 'title' per le <img>... 
 PAROLA:str = "macro"
 MINI_APP_PREFIX:str = "from-mini-app_"
 DEFAULT_STUN_DURATION:int = 60
-HIOSHIRU:str = "hioshiru_stickers.txt"
+HIOSHIRU_FILE:str = "hioshiru_stickers.txt"
 STUNNED_STRING:str = "stunned_until"
-ERROR_CHAT:str = "error_chat.txt"
+ERROR_CHAT_FILE:str = "error_chat.txt"
 DELETE_INCOMING_MESSAGES:str = "delete_incoming"
-
+CHATS_FILE:str = "chats.txt"
 
 class DIR:
 	@staticmethod

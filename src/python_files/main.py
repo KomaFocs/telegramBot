@@ -10,6 +10,7 @@ from src.python_files.jobs.backup import backup_periodico
 from src.python_files.jobs.post_init import avviamento
 from src.python_files.jobs.shutdown import gestisci_shutdown
 from src.python_files.utils.cooldown import stunned
+from src.python_files.commands.commands_visibility import visibility
 from src.python_files.utils.fa_client import DIR
 
 
@@ -27,6 +28,9 @@ if __name__ == "__main__":
 		.concurrent_updates(True)
 		.build()
 	)
+
+	# Comandi admin only
+	app.add_handler(TypeHandler(Update, visibility), group=-2)
 
 	# Stun
 	app.add_handler(TypeHandler(Update, stunned), group=-1)

@@ -3,9 +3,9 @@ from pathlib import Path
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.python_files.utils.constants import DIR, ERROR_CHAT
+from src.python_files.utils.constants import DIR, ERROR_CHAT_FILE
 
-ERROR_FILE:Path = DIR.SECRETS / ERROR_CHAT
+ERROR_FILE:Path = DIR.SECRETS / ERROR_CHAT_FILE
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	try:
 		with open(ERROR_FILE, "r") as f:
