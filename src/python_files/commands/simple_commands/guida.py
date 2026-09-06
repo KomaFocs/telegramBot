@@ -1,12 +1,12 @@
 import asyncio
 import random
 from telegram.constants import ChatAction
-from src.python_files.utils.constants import DIR, DEFAULT_STUN_DURATION, HIOSHIRU
+from src.python_files.utils.constants import DIR, DEFAULT_STUN_DURATION, HIOSHIRU, DELETE_INCOMING_MESSAGES
 from src.python_files.utils.cooldown import stun_bot
 from src.python_files.utils.decorators import logger, chat_action, single_execution
 from telegram import Update, Message, Chat
 from telegram.ext import ContextTypes
-from src.python_files.utils.telegram_helpers import delete_messages
+from src.python_files.utils.telegram_helpers import resume_operations
 
 
 @logger
@@ -78,6 +78,8 @@ async def impazzisci(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 	if not chat or not user:
 		return
 
+	context.user_data[DELETE_INCOMING_MESSAGES] = True
+
 	with open(DIR.SECRETS/HIOSHIRU, "r") as f:
 		stickers = [line.strip().split("_")[-1] for line in f if line.strip()]
 
@@ -93,13 +95,12 @@ async def impazzisci(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 		"il comando che hai usato per chiedere informazioni sul comando.",
 		f"{sticker_prefix}{next(sticker_iterator)}",
 		"Ok, vuoi una guida sulla guida.--",
-		"\n\nDevo spiegarti come usare la guida usando la guida.--",
 		"\n\nDevo usare la guida per capire come usare la guida usando la guida per spiegarti come usare la guida...",
 		"Tentativo di consultare la guida in corso... attendere prego...",
-		"Attenzione: guida in surriscaldamento: consultare la guida prima di consultare la guida.--",
-		"\n\nAttenzione: surriscaldamento del surriscaldamento, consigliamo di consultare la guida su come smettere di consultare la guida.--",
-		"\n\nAttenzione: messaggio 'attenzione' in surriscaldamento.",
+		"Attenzione! Guida in surriscaldamento: consultare la guida prima di consultare la guida.--",
+		"\n\nAttenzione: surriscaldamento del surriscaldamento, consigliamo di consultare la guida su come smettere di consultare la guida.",
 		f"{sticker_prefix}{next(sticker_iterator)}",
+		"\n\nAttenzione: messaggio 'attenzione' in surriscaldamento.",
 		f"Stiamo avendo problemi tecnici. Riprova fra {DEFAULT_STUN_DURATION} secondi.",
 		f"{sticker_prefix}{next(sticker_iterator)}",
 	]
@@ -108,42 +109,46 @@ async def impazzisci(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 	last_message: Message | None = None
 	last_text: str = ""
 
-	for text in messages:
-		if text.startswith(sticker_prefix):
-			sticker_id = text.removeprefix(sticker_prefix)
+	try:
+		for text in messages:
+			if text.startswith(sticker_prefix):
+				sticker_id = text.removeprefix(sticker_prefix)
 
-			await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.CHOOSE_STICKER)
-			await asyncio.sleep(WAIT_TIMES[0])
+				await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.CHOOSE_STICKER)
+				await asyncio.sleep(WAIT_TIMES[0])
 
-			sent_msg = await context.bot.send_sticker(chat_id=chat.id, sticker=sticker_id)
-			to_delete.append(sent_msg)
+				sent_msg = await context.bot.send_sticker(chat_id=chat.id, sticker=sticker_id)
+				to_delete.append(sent_msg)
 
-			last_message = None
-			last_text = ""
+				last_message = None
+				last_text = ""
 
-		elif last_message and last_text.endswith("--"):
-			await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
-			await asyncio.sleep(random.uniform(*WAIT_TIMES))
+			elif last_message and last_text.endswith("--"):
+				await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
+				await asyncio.sleep(random.uniform(*WAIT_TIMES))
 
-			base_text = last_text.removesuffix("--")
-			clean_addition = text.removesuffix("--") if text.endswith("--") else text
+				base_text = last_text.removesuffix("--")
+				clean_addition = text.removesuffix("--") if text.endswith("--") else text
 
-			updated_text = f"{base_text}{clean_addition}"
-			await last_message.edit_text(updated_text)
+				updated_text = f"{base_text}{clean_addition}"
+				await last_message.edit_text(updated_text)
 
-			last_text = f"{base_text}{text}"
+				last_text = f"{base_text}{text}"
 
-		else:
-			to_send: str = text.removesuffix("--") if text.endswith("--") else text
+			else:
+				to_send: str = text.removesuffix("--") if text.endswith("--") else text
 
-			await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
-			await asyncio.sleep(random.uniform(*WAIT_TIMES))
+				await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
+				await asyncio.sleep(random.uniform(*WAIT_TIMES))
 
-			sent_msg = await context.bot.send_message(chat_id=chat.id, text=to_send)
-			to_delete.append(sent_msg)
+				sent_msg = await context.bot.send_message(chat_id=chat.id, text=to_send)
+				to_delete.append(sent_msg)
 
-			last_message = sent_msg
-			last_text = text
+				last_message = sent_msg
+				last_text = text
 
-	stun_bot(context, user.id, duration=DEFAULT_STUN_DURATION)
-	asyncio.create_task(delete_messages(to_delete, delay=DEFAULT_STUN_DURATION))
+		stun_bot(context, user.id, duration=DEFAULT_STUN_DURATION)
+		asyncio.create_task(resume_operations(update=update, context=context, messages=to_delete, delay=DEFAULT_STUN_DURATION))
+
+	finally:
+		context.user_data[DELETE_INCOMING_MESSAGES] = False

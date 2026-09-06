@@ -25,7 +25,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 	# Da qui in poi il messaggio è privato o è in un gruppo ma diretto al bot
 
 	await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-
 	if message.from_user:
 		user_id = message.from_user.id
 		name = message.from_user.first_name

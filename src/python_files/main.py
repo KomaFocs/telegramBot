@@ -24,6 +24,7 @@ if __name__ == "__main__":
 		.token(BOT_TOKEN)
 		.post_init(avviamento)
 		.post_shutdown(gestisci_shutdown)
+		.concurrent_updates(True)
 		.build()
 	)
 
@@ -53,9 +54,8 @@ if __name__ == "__main__":
 
 	# Controlla ogni tot secondi se arriva un nuovo messaggio
 	app.run_polling(
-		poll_interval = 2,
 		allowed_updates = [Update.MESSAGE, Update.CALLBACK_QUERY],
-		drop_pending_updates = True
+		drop_pending_updates = True,
 	)
 
 

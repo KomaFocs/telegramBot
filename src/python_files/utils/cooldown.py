@@ -1,7 +1,7 @@
 import time
 from telegram import Update
 from telegram.ext import ContextTypes, ApplicationHandlerStop
-from src.python_files.utils.constants import DEFAULT_STUN_DURATION, HIOSHIRU, DIR, STUNNED_STRING
+from src.python_files.utils.constants import DEFAULT_STUN_DURATION, STUNNED_STRING, DELETE_INCOMING_MESSAGES
 
 
 def stun_bot(context:ContextTypes.DEFAULT_TYPE, user_id:int=-1, duration:int=DEFAULT_STUN_DURATION) -> None:
@@ -19,10 +19,19 @@ def is_bot_stunned(context:ContextTypes.DEFAULT_TYPE, user_id:int=-1) -> tuple[b
 
 
 async def stunned(update:Update, context:ContextTypes.DEFAULT_TYPE) -> None:
-	bot_stunned, _ = is_bot_stunned(context)
+	bot_stunned = is_bot_stunned(context)[0]
+	deleting = context.user_data.get(DELETE_INCOMING_MESSAGES, False)
 
-	if bot_stunned:
-		with open(DIR.SECRETS/HIOSHIRU, "r") as file:
-			sticker = file.read().split()[3]
-		await context.bot.send_sticker(chat_id=update.effective_chat.id, sticker=sticker)
-		raise ApplicationHandlerStop
+	if not bot_stunned and not deleting:
+		return
+
+	if deleting:
+		message = update.effective_message
+		if message and message.from_user and not message.from_user.is_bot:
+			try:
+				await message.delete()
+			except Exception as e:
+				print(e)
+
+
+	raise ApplicationHandlerStop
