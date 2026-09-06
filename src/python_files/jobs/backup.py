@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from telegram.ext import ContextTypes, Application
 
@@ -9,7 +9,7 @@ async def salva_dati(target:Application | ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def backup_periodico(app:Application, active:bool = False) -> None:
-	if app.job_queue:
+	if active and app.job_queue:
 		app.job_queue.run_repeating(
 			salva_dati,
 			interval=timedelta(minutes=60),
