@@ -1,4 +1,22 @@
+# Files
 secrets/
 txt_files/id.txt
+
+# Python
 .venv
 *.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment variables
+.env
