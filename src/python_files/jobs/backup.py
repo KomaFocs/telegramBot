@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes, Application
 
 async def salva_dati(target:Application | ContextTypes.DEFAULT_TYPE) -> None:
 	app = target if isinstance(target, Application) else target.application
-	print(f"[{datetime.now():%d/%m/%Y - %H:%M:%S}]: backup eseguito.")
+	# print(f"[{datetime.now():%d/%m/%Y - %H:%M:%S}]: backup eseguito.")
 
 
 def backup_periodico(app:Application, active:bool = False) -> None:

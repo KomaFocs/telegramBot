@@ -4,7 +4,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from src.python_files.utils.decorators import logger, chat_action
-from src.python_files.utils.util import DIR
+from src.python_files.utils.fa_client import DIR
 
 @logger
 @chat_action(ChatAction.UPLOAD_PHOTO)

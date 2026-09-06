@@ -4,11 +4,13 @@ from telegram import Message, Update
 from telegram.ext import ContextTypes
 from telegram.constants import ChatAction
 from src.python_files.config.lista_tipi import FA_Type
-from src.python_files.utils.util import (
-	BeautifulSoup, send_request_to_FA, check_url, check_for_blacklist, parse_html_tag_img,
-	get_author, get_img_tags, get_img_tags_as_string, get_img_source
+from src.python_files.utils.fa_client import (
+	BeautifulSoup, send_request, parse_html_tag_image,
+	get_uploader, get_image_tags, convert_tags_to_string, get_image_source
 )
 from src.python_files.utils.decorators import logger, chat_action, single_execution
+from src.python_files.utils.filters import check_for_blacklist
+from src.python_files.utils.telegram_helpers import check_url
 
 
 @logger
@@ -24,7 +26,7 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 	link:str = f"https://www.furaffinity.net/search/?q={query}&mode=extended&type-{categoria}=1"
 	try:
 		if not context.args:  # immagine a caso da FA
-			response:BeautifulSoup|int = await send_request_to_FA(link)
+			response:BeautifulSoup|int = await send_request(link)
 
 			# risultato di ricerca: immagine in SD e link relativo
 			elements:ResultSet = response.select("b a")
@@ -41,21 +43,21 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 				await status.edit_text("Link non valido: devi fornire un link di furaffinity.")
 				return
 
-		response = await send_request_to_FA(link)
-		name:str = get_author(response)
+		response = await send_request(link)
+		name:str = get_uploader(response)
 		if not name:
 			reply = "Errore nel recuperare il nome dell'autore. Riprova."
 			await status.edit_text(reply)
 			return
 
 		# pagina della submission: immagine in HD e link URI
-		html_tag_img = parse_html_tag_img(response)
+		html_tag_img = parse_html_tag_image(response)
 		if html_tag_img is None:
 			reply = "Errore nel recuperare il tag html dell'immagine dall'URL. Riprova."
 			await status.edit_text(reply)
 			return
 
-		img_tags = get_img_tags(html_tag_img)
+		img_tags = get_image_tags(html_tag_img)
 		if img_tags is None:
 			reply = "Errore nel recuperare i tag dall'immagine. Riprova."
 			await status.edit_text(reply)
@@ -63,7 +65,7 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 
 		await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.UPLOAD_PHOTO)
 
-		img_src = get_img_source(html_tag_img)
+		img_src = get_image_source(html_tag_img)
 		if img_src is None:
 			await update.message.reply_text("Errore nel recupero della foto.")
 			return
@@ -73,7 +75,7 @@ async def furaffinity_command(update:Update, context: ContextTypes.DEFAULT_TYPE)
 		reply:str = (
 			f"Autore: {name}\n"
 			f"{(blacklisted_words+"\n") if to_spoil else ""}"
-			f"Tag: {get_img_tags_as_string(img_tags)}\n"
+			f"Tag: {convert_tags_to_string(img_tags)}\n"
 			f"Source: {link}\n"
 		)
 

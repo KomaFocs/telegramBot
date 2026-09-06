@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.python_files.utils.decorators import logger, chat_action
-from src.python_files.utils.util import PAROLA
+from src.python_files.utils.constants import PAROLA
 
 
 @logger

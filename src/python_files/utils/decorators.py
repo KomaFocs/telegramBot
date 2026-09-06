@@ -6,7 +6,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 _processing_users:set[int] = set()
-def single_execution(fallback_message:str = "⏳ Aspetta prima di inviare un altro comando!"):
+def single_execution(fallback_message:str = "⏳ Aspetta prima di inviare un altro comando!", verbose:bool = True):
 	"""Assicura che la funzione termini prima di essere eseguita nuovamente"""
 	def decorator(func:Callable[..., Any]):
 		@wraps(func)
@@ -16,10 +16,11 @@ def single_execution(fallback_message:str = "⏳ Aspetta prima di inviare un alt
 				return await func(update, context, *args, **kwargs)
 			user_id:int = user.id
 			if user_id in _processing_users:
-				if update.callback_query:
-					await update.callback_query.answer(fallback_message, show_alert=True)
-				elif update.message:
-					await update.message.reply_text(fallback_message)
+				if verbose:
+					if update.callback_query:
+						await update.callback_query.answer(fallback_message, show_alert=True)
+					elif update.message:
+						await update.message.reply_text(fallback_message)
 				return None
 
 			_processing_users.add(user_id)
