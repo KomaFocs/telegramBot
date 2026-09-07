@@ -1,5 +1,7 @@
 from pathlib import Path
-from src.python_files.utils.constants import FILTER, IMAGE, DIR
+
+from src.python_files.models.image import Image
+from src.python_files.utils.constants import FILTER, DIR
 
 
 def get_from_file(file:Path) -> list[str]:
@@ -68,12 +70,12 @@ def check_for_whitelist(img_tags: list[str], whitelist:list[str]=None) -> tuple[
 	return False, ""
 
 
-def filter_submissions(images:list[dict], whitelist:list[str]=None, blacklist:list[str]=None) -> list[dict]:
+def filter_submissions(images:list[Image], whitelist:list[str]=None, blacklist:list[str]=None) -> list[Image]:
 	wl = whitelist_set if whitelist is None else _clean_tags(whitelist)
 	bl = blacklist_set if blacklist is None else _clean_tags(blacklist)
 
 	return [
-		img for img in images if eval_submission_tags(img.get(IMAGE.TAGS, []), whitelist=wl, blacklist=bl)[FILTER.IS_ALLOWED]
+		img for img in images if eval_submission_tags(img.tags, whitelist=wl, blacklist=bl)[FILTER.IS_ALLOWED]
 	]
 
 

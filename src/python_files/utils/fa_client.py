@@ -1,6 +1,9 @@
 import httpx
-from bs4 import BeautifulSoup
-from src.python_files.utils.constants import DIR, SOURCE, DATA_TAGS, TITLE
+from bs4 import BeautifulSoup, Tag
+from httpx import Response
+from telegram import Update
+from src.python_files.models.image import Image
+from src.python_files.utils.constants import DIR, IMAGE, FA_URL, BUTTON
 
 
 def get_cookies() -> dict | None:
@@ -10,45 +13,52 @@ def get_cookies() -> dict | None:
 	return {"a": lines[0].strip(), "b": lines[1].strip()} if len(lines) > 1 else None
 
 
-async def send_request(url:str) -> BeautifulSoup | int:
+async def send_request(update:Update, url:str) -> Response | None:
 	async with httpx.AsyncClient(cookies=get_cookies(), follow_redirects=True) as client:
 		try:
-			response = await client.get(url, timeout=60)
-			return BeautifulSoup(response.text, "html.parser") if response.status_code == 200 else response.status_code
-		except httpx.RequestError:
-			return -1
+			return await client.get(url, timeout=60)
+		except Exception:
+			error_message: str = f"⚠️ Errore durante il collegamento a {url}"
+			await update.message.reply_text(error_message)
+			return None
 
 
-def parse_html_tag_image(response:BeautifulSoup) -> BeautifulSoup | None:
-	img = response.find('img', attrs={SOURCE: True})
-	return img if img else None
+def convert_to_soup(response: Response) -> BeautifulSoup:
+	return BeautifulSoup(response.content, "html.parser")
 
 
-def get_image_title(img:BeautifulSoup) -> str | None:
-	return img[TITLE] if img else None
+def parse_images(response:Response) -> list[Image]:
+	images = []
+	soup = convert_to_soup(response)
+	for figure in soup.select("figure"):
+		img: Tag = figure.select_one("img")
+		author: Tag = figure.select_one("p i + a")
+		link: Tag = figure.select_one("figcaption p a")
+		href = link.get(IMAGE.HREF, "") if link else ""
+		submission_id:int = int((href.split("/")[2]) if link else 0)
+
+		image = Image(
+			author = author.get(IMAGE.TITLE, "") if author else "",
+			_tags = img.get(IMAGE.DATATAGS, "").split() if img else [],
+			submission_link = FA_URL + (link.get(IMAGE.HREF, "") if link else ""),
+			preview_link = f"https:{img.get(IMAGE.SOURCE, "")}" if img else "",
+			submission_id = submission_id,
+		)
+		images.append(image)
+	return images
 
 
-def get_image_tags(img:BeautifulSoup) -> list[str] | None:
-	if not img or DATA_TAGS not in img.attrs:
-		return None
-	tags:list = []
-	for tag in img[DATA_TAGS].split(" "):
-		if not (len(tag) >= 2 and tag[0].isalpha() and tag[1] == "_"):
-			clean_tag = tag.replace("-", "_")
-			tags.append(f"#{clean_tag}")
-	return tags
+def get_images(response:Response) -> list[Image] | None:
+	return parse_images(response)
 
 
-def convert_tags_to_string(tags:list[str]) -> str:
-	return ", ".join(tags)
+def find_next_button(response:Response) -> str | None:
+	soup = convert_to_soup(response)
+	next_button = soup.select_one(BUTTON.NEXT_PAGE)
 
-
-def get_uploader(response:BeautifulSoup) -> str | None:
-	return response.find("title").getText().split("by")[1].split("--")[0].strip() if response else None
-
-
-def get_image_source(img:BeautifulSoup) -> str | None:
-	if img is None: return None
-	return "https:" + img[SOURCE] if img[SOURCE].startswith("//") else img[SOURCE]
-
+	if next_button and next_button.get(BUTTON.HREF):
+		current_url = f"{FA_URL}{next_button.get(BUTTON.HREF)}"
+	else:
+		current_url = None
+	return current_url
 

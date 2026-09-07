@@ -8,19 +8,21 @@ from src.python_files.utils.constants import DEFAULT_STUN_DURATION
 
 
 def check_url(context: ContextTypes.DEFAULT_TYPE) -> str | None:
-	if not context.args: return None
+	if not context.args:
+		return None
 
 	VALID_HOSTNAME = "furaffinity.net"
-	raw_url:str = next((arg for arg in context.args if VALID_HOSTNAME in arg.lower()), None)
-	if not raw_url: return None
+	raw_url = context.args[0]
 
-	url_to_parse:str = raw_url if raw_url.lower().startswith("http://", "https://") else f"https://{raw_url}"
-	parsed:ParseResult = urlparse(url_to_parse)
-	hostname:str = parsed.hostname.lower() if parsed.hostname else ""
-	if hostname == VALID_HOSTNAME or hostname.endswith(VALID_HOSTNAME):
-		return parsed._replace(scheme="https").geturl()
+	url_to_parse = raw_url if raw_url.lower().startswith(("http://", "https://")) else f"https://{raw_url}"
 
-	return None
+	parsed = urlparse(url_to_parse)
+	hostname = parsed.hostname.lower() if parsed.hostname else ""
+
+	if hostname != VALID_HOSTNAME and not hostname.endswith(f".{VALID_HOSTNAME}"):
+		return None
+
+	return parsed._replace(scheme="https").geturl()
 
 
 

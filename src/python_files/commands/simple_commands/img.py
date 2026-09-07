@@ -9,8 +9,8 @@ from src.python_files.utils.fa_client import DIR
 @logger
 @chat_action(ChatAction.UPLOAD_PHOTO)
 async def img_command(update:Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-	image:str = DIR.IMG/"rick_astley.jpg"
-	with open(DIR.TXT/"lyrics.txt", "r") as file:
+	image:str = DIR.IMG_FILES / "rick_astley.jpg"
+	with open(DIR.TXT_FILES / "lyrics.txt", "r") as file:
 		lines = file.readlines()
 		text = random.choice(lines)
 	await update.message.reply_photo(photo=image, caption=text)

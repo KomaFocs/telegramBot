@@ -33,7 +33,6 @@ def single_execution(fallback_message:str = "⏳ Aspetta prima di inviare un alt
 	return decorator
 
 
-
 def logger(function):
 	@wraps(function)
 	def wrapper(*args, **kwargs):
@@ -59,3 +58,4 @@ def chat_action(action:ChatAction = ChatAction.TYPING):
 			return await func(update, context, *args, **kwargs)
 		return wrapper
 	return decorator
+

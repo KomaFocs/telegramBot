@@ -24,7 +24,7 @@ if __name__ == "__main__":
 		Application.builder()
 		.token(BOT_TOKEN)
 		.post_init(avviamento)
-		.post_shutdown(gestisci_shutdown)
+		.post_stop(gestisci_shutdown)
 		.concurrent_updates(True)
 		.build()
 	)

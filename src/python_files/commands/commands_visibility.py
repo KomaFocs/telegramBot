@@ -18,8 +18,9 @@ async def visibility(update:Update, context:ContextTypes.DEFAULT_TYPE) -> None:
 		raise ApplicationHandlerStop
 
 	with open(DIR.SECRETS/CHATS_FILE) as file:
-		chat_ids:list[str] = file.readlines()[0].strip().split("_")
-		megliomacro = int(chat_ids[0])
+		chat_ids:list[str] = file.readlines()[0].strip().split("___")
+		#
+		megliomacro = int(3)
 
 	if chat.id != megliomacro:
 		return
