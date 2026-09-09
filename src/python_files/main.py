@@ -3,6 +3,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, TypeHandler
 from src.python_files.commands.handle_message import handle_message
 from src.python_files.commands.handle_sticker import handle_sticker
+from src.python_files.commands.ignore_channels import ignora_canali
 from src.python_files.commands.mini_app import open_app
 from src.python_files.config.lista_comandi import COMANDI
 from src.python_files.errors.error import error
@@ -28,6 +29,10 @@ if __name__ == "__main__":
 		.concurrent_updates(True)
 		.build()
 	)
+
+
+	# Ignora i messaggi nei canali
+	app.add_handler(TypeHandler(Update, ignora_canali), group=-10)
 
 	# Comandi admin only
 	app.add_handler(TypeHandler(Update, visibility), group=-2)
