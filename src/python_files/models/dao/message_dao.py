@@ -49,6 +49,23 @@ def get_all_messages(status: list[STATUS] | None = None) -> list[Message]:
 		return list(session.scalars(statement).unique().all())
 
 
+def reset_pending_group_messages() -> None:
+	with get_session() as session:
+		statement = (
+			select(Message)
+			.where(
+				Message.sent_in_group == True,
+				Message.channel_message_id.is_(None),
+			)
+		)
+		messages = session.scalars(statement).all()
+
+		for message in messages:
+			message.sent_in_group = False
+
+		session.commit()
+
+
 def update_message(message:Message) -> None:
 	with get_session() as session:
 		session.merge(message)

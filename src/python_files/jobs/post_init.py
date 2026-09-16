@@ -8,6 +8,7 @@ from src.python_files.config.lista_comandi import COMANDI
 from src.python_files.config.database import init_db
 from src.python_files.jobs.job_queue import JobQueue
 from src.python_files.jobs.telegram_publisher import TelegramPublisher
+from src.python_files.models.dao.message_dao import reset_pending_group_messages
 from src.python_files.utils.constants import DIR, JOB_QUEUE, JOB_QUEUE_TASK
 from src.python_files.utils.log import time_log
 
@@ -30,7 +31,13 @@ async def avviamento(application:Application):
 		msg:str = f"Rate limit: riprova ad aggiornare la foto profilo fra {e.retry_after} secondi."
 		time_log(msg)
 
+	# configura database
 	init_db()
+
+	# controlla se ci sono messaggi già inviati nel gruppo ma non ancora mandati nel canale
+	reset_pending_group_messages()
+
+	# imposta la programmazione dei messaggi
 	setup_job(application)
 
 	time_log("Avvio completato.")
