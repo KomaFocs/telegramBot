@@ -3,10 +3,10 @@ from telegram.constants import ChatAction, ChatType
 from telegram.ext import ContextTypes
 from telegram import Update, Message
 from src.python_files.utils.constants import PAROLA
-from src.python_files.utils.decorators import chat_action
 
+def _log(message:str) -> None:
+	print(message)
 
-@chat_action()
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	if not update.message: return  # messaggio non valido / modifica / callback
 
@@ -18,7 +18,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 	is_group:bool = message.chat.type in (ChatType.GROUP, ChatType.SUPERGROUP)
 	user_id:int
 	name:str
-
+	print(f"group={is_group}, message={message_string}, chatid={update.effective_chat.id}")
 	if is_group and bot_username.lower() not in message_string:
 		return  # messaggio ricevuto in un gruppo, ma senza venire interpellato
 
@@ -37,8 +37,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 		user_id = 0
 		name = "Ignoto"
 
-	if msg_type == ChatType.PRIVATE:
-		print(f"[{name} ({user_id})] \"{message_string}\"")
+	if msg_type in [ChatType.PRIVATE, ChatType.GROUP, ChatType.SUPERGROUP]:
+		_log(f"[{user_id} {name}]: {message_string}")
 
 	meglio_macro:str = "Sì ok, micro... ma Meglio Macro."
 	risposte:list[str] = ["bravo", "ottimo", "eccellente", "spettacolare", "giusto", "ben detto", "decisamente valido", "basato"]
@@ -50,6 +50,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 	else:
 		response = f"errore. non c'è \"{PAROLA}\" nel messaggio.".upper()
 
-	print(f"[Bot] \"{response}\"")
+	_log(f"[{context.bot.username}]: {response}")
 
 	await message.reply_text(text=response, reply_to_message_id=message.message_id)

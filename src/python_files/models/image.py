@@ -1,33 +1,57 @@
-from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+from datetime import datetime
 
-@dataclass
-class Image:
-	author:str=""
-	_tags:list[str] = field(default_factory=list)
-	submission_link:str=""
-	preview_link:str=""
-	submission_id:int=0
+from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.python_files.models.base import Base
+from src.python_files.utils.constants import DATABASE_TABLE_ID, DATABASE_TABLES
 
-	@property
-	def tags(self) -> list[str]:
-		return self._tags
+if TYPE_CHECKING:
+	from src.python_files.models.user import User
 
 
-	def get_tags(self, count:int=0) -> list[str]:
-		return self._tags if count <= 0 else self._tags[:count]
+class Image(Base):
+	__tablename__ = DATABASE_TABLES.IMAGES
 
+	image_id:Mapped[int] = mapped_column(
+		primary_key=True,
+	)
 
-	def clean_tags(self) -> list[str]:
-		taglist = []
-		for tag in self._tags:
-			if not (len(tag) >= 2 and tag[0].isalpha() and tag[1] == "_"):
-				# ignora i tag singolo carattere seguiti da un underscore (i.e.: u_username)
-				clean_tag = tag.replace("-", "_")  # clear-sky -> clear_sky
-				taglist.append(f"#{clean_tag}")
-		return taglist
+	username:Mapped[str] = mapped_column(
+		ForeignKey(f"{DATABASE_TABLES.USERS}.{DATABASE_TABLE_ID.OF_USERS}"),
+		nullable=False,
+	)
 
+	title:Mapped[str] = mapped_column(
+		String,
+		nullable=False,
+	)
 
-	def format_description(self) -> str:
-		return f"Utente: {self.author}\nTag: {', '.join(self.clean_tags())}\nLink: {self.submission_link}"
+	tags:Mapped[str] = mapped_column(
+		Text,
+		nullable=False,
+	)
 
+	submission_link:Mapped[str] = mapped_column(
+		String,
+		nullable=False,
+	)
+
+	sd_image_link:Mapped[str] = mapped_column(
+		String,
+		nullable=False,
+	)
+
+	hd_image_link: Mapped[str] = mapped_column(
+		String,
+		nullable=True,
+	)
+
+	submission_date:Mapped[datetime] = mapped_column(
+		nullable=False,
+	)
+
+	users:Mapped["User"] = relationship(
+		back_populates=DATABASE_TABLES.IMAGES,
+	)

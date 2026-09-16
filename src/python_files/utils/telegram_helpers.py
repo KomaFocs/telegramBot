@@ -1,5 +1,6 @@
 import asyncio
-from urllib.parse import urlparse, ParseResult
+from pathlib import Path
+from urllib.parse import urlparse
 
 from telegram import Message, Update
 from telegram.ext import ContextTypes
@@ -25,7 +26,6 @@ def check_url(context: ContextTypes.DEFAULT_TYPE) -> str | None:
 	return parsed._replace(scheme="https").geturl()
 
 
-
 async def delete_messages(message_list: list[Message], delay: int | None = None) -> None:
 	if delay and delay > 0:
 		await asyncio.sleep(delay)
@@ -33,12 +33,17 @@ async def delete_messages(message_list: list[Message], delay: int | None = None)
 	for message in message_list:
 		try:
 			await message.delete()
-			await asyncio.sleep(0.1)  # Micro-pausa per evitare Flood Control
-		except Exception:
-			pass
+			await asyncio.sleep(0.1)  # per evitare Flood Control
+		except Exception as e:
+			print(f"{e}: Failed to delete message '{message}'.")
 
 
 async def resume_operations(update:Update, context:ContextTypes.DEFAULT_TYPE, messages:list[Message], delay:int=DEFAULT_STUN_DURATION):
 	await delete_messages(message_list=messages, delay=delay)
-	msg:str="Non ho informazioni su /guida guida e tu non hai mai richiesto una cosa simile, haha immagina farlo haha"
+	msg:str = "Non ho informazioni su /guida guida e tu non hai mai richiesto una cosa simile, haha immagina farlo haha"
 	await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+
+
+def get_chat_id_from_file(file:str | Path) -> int | None:
+	with open(file, "r") as f:
+		return int(f.read().strip())

@@ -1,9 +1,15 @@
 import httpx
-from bs4 import BeautifulSoup, Tag
 from httpx import Response
-from telegram import Update
+
+from datetime import datetime
+
+from bs4 import BeautifulSoup, Tag
+
 from src.python_files.models.image import Image
-from src.python_files.utils.constants import DIR, IMAGE, FA_URL, BUTTON
+from src.python_files.models.message import Message
+from src.python_files.models.submission import Submission
+from src.python_files.models.user import User
+from src.python_files.utils.constants import DIR, FA_URL, HTML_TAG
 
 
 def get_cookies() -> dict | None:
@@ -13,52 +19,104 @@ def get_cookies() -> dict | None:
 	return {"a": lines[0].strip(), "b": lines[1].strip()} if len(lines) > 1 else None
 
 
-async def send_request(update:Update, url:str) -> Response | None:
+async def send_request(url:str) -> Response | None:
 	async with httpx.AsyncClient(cookies=get_cookies(), follow_redirects=True) as client:
 		try:
 			return await client.get(url, timeout=60)
 		except Exception:
-			error_message: str = f"⚠️ Errore durante il collegamento a {url}"
-			await update.message.reply_text(error_message)
+			print(f"Errore per url = {url}")
 			return None
 
 
 def convert_to_soup(response: Response) -> BeautifulSoup:
-	return BeautifulSoup(response.content, "html.parser")
+	return BeautifulSoup(response.text, "html.parser")
 
 
-def parse_images(response:Response) -> list[Image]:
-	images = []
-	soup = convert_to_soup(response)
-	for figure in soup.select("figure"):
-		img: Tag = figure.select_one("img")
-		author: Tag = figure.select_one("p i + a")
-		link: Tag = figure.select_one("figcaption p a")
-		href = link.get(IMAGE.HREF, "") if link else ""
-		submission_id:int = int((href.split("/")[2]) if link else 0)
+def get_all_submissions(response:Response) -> list[Submission] | None:
+	soup:BeautifulSoup = convert_to_soup(response)
+	submissions:list[Submission] = []
 
-		image = Image(
-			author = author.get(IMAGE.TITLE, "") if author else "",
-			_tags = img.get(IMAGE.DATATAGS, "").split() if img else [],
-			submission_link = FA_URL + (link.get(IMAGE.HREF, "") if link else ""),
-			preview_link = f"https:{img.get(IMAGE.SOURCE, "")}" if img else "",
-			submission_id = submission_id,
+	for tag in soup.select(HTML_TAG.FIGURE):
+		user:User = get_user(tag)
+		img:Image = get_image(tag, user.username)
+		message:Message = Message(
+			image_id = img.image_id
 		)
-		images.append(image)
-	return images
+
+		submissions.append(
+			Submission(
+				image=img,
+				user=user,
+				message=message,
+			)
+		)
+	return submissions
 
 
-def get_images(response:Response) -> list[Image] | None:
-	return parse_images(response)
+def get_user(tag:Tag) -> User | None:
+	author:Tag = tag.select_one(HTML_TAG.AUTHOR)
+	username:str = author[HTML_TAG.HREF].strip("/").split("/")[-1]
+	display_name:str = author[HTML_TAG.TITLE]
+
+	return User(
+		username=username,
+		display_name=display_name,
+	)
+
+
+def get_tags(tag:Tag) -> str:
+	return tag.select_one(HTML_TAG.IMG).get(HTML_TAG.DATATAGS, "")
+
+
+def get_image(html_tag:Tag, username:str) -> Image | None:
+	image:Tag = html_tag.select_one(HTML_TAG.IMG)
+	view:Tag = html_tag.select_one(HTML_TAG.VIEW)
+	href:str = view.get(HTML_TAG.HREF, "")
+	image_id = int(href.split("/")[2])
+	source = image[HTML_TAG.SOURCE]
+	timestamp = int(source.rsplit("-", 1)[1].split(".",1)[0])
+
+	return Image(
+		image_id=image_id,
+		username=username,
+		title=view[HTML_TAG.TITLE].strip(),
+		tags=get_tags(html_tag),
+		submission_link=href,
+		submission_date=datetime.fromtimestamp(timestamp),
+		sd_image_link=f"https:{source}"
+	)
 
 
 def find_next_button(response:Response) -> str | None:
 	soup = convert_to_soup(response)
-	next_button = soup.select_one(BUTTON.NEXT_PAGE)
+	next_button = soup.select_one(HTML_TAG.NEXT_PAGE)
 
-	if next_button and next_button.get(BUTTON.HREF):
-		current_url = f"{FA_URL}{next_button.get(BUTTON.HREF)}"
+	if next_button and next_button.get(HTML_TAG.HREF):
+		current_url = f"{FA_URL}{next_button.get(HTML_TAG.HREF)}"
 	else:
 		current_url = None
 	return current_url
 
+
+def parse_hd_image(response: Response) -> str:
+	soup = convert_to_soup(response)
+
+	img = soup.select_one(HTML_TAG.HD_IMAGE)
+	if not img:
+		return ""
+
+	src = img.get(HTML_TAG.SOURCE, "")
+
+	return f"https:{src}" if src.startswith("//") else src
+
+
+async def prepare_img_to_send(image:Image) -> Image:
+	link = image.submission_link
+	response = await send_request(link)
+	if not response:
+		image.sd_image_link = link
+		return image
+
+	link = parse_hd_image(response)
+	image.sd_image_link = link
+	return image

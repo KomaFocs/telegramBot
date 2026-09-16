@@ -1,6 +1,6 @@
 # Files
 secrets/
-txt_files/id.txt
+txt_files
 
 # Python
 .venv
