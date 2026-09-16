@@ -2,12 +2,10 @@ import asyncio
 from datetime import date, datetime, timedelta
 
 from src.python_files.jobs.telegram_publisher import TelegramPublisher
-from src.python_files.models.dao.image_dao import get_image
 from src.python_files.models.dao.message_dao import (
 	get_messages,
 	update_message,
 )
-from src.python_files.models.dao.user_dao import get_user
 from src.python_files.models.message import Message
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import ORARI, STATUS
@@ -67,10 +65,7 @@ class JobQueue:
 		now: datetime = datetime.now()
 
 		for message in messages:
-			if (
-					message.scheduled_at is not None
-					and message.scheduled_at <= now
-			):
+			if message.scheduled_at is not None and message.scheduled_at <= now:
 				submission = self._get_submission(message)
 
 				if submission is not None:
@@ -115,7 +110,7 @@ class JobQueue:
 		occupied: set[datetime] = {
 			message.scheduled_at
 			for message in get_messages(scheduled=True)
-			if message.scheduled_at is not None
+			if message.scheduled_at is not None and message.sent_in_group
 		}
 
 		slots: list[datetime] = []

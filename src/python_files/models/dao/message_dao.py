@@ -23,14 +23,25 @@ def get_messages(scheduled: bool) -> list[Message]:
 		statement = (
 			select(Message)
 			.options(
-				joinedload(Message.image).joinedload(Image.users)  # Carica sia Image che User!
+				joinedload(Message.image).joinedload(Image.users)
 			)
 			.where(
-				Message.status.in_([STATUS.PENDING, STATUS.APPROVED]),
-				Message.scheduled_at.is_not(None) if scheduled else Message.scheduled_at.is_(None)
+				Message.status.in_([STATUS.PENDING, STATUS.APPROVED])
 			)
-			.order_by(Message.scheduled_at if scheduled else Message.image_id)
 		)
+
+		if scheduled:
+			# CANALE: deve essere stato inviato nel gruppo E avere una data
+			statement = statement.where(
+				Message.sent_in_group == True,
+				Message.scheduled_at.is_not(None)
+			).order_by(Message.scheduled_at.asc())
+		else:
+			# GRUPPO TEST: qualsiasi messaggio mai inviato nel gruppo
+			statement = statement.where(
+				Message.sent_in_group == False
+			).order_by(Message.image_id.asc())
+
 		return list(session.scalars(statement).unique().all())
 
 
