@@ -1,8 +1,8 @@
 import asyncio
-import random
+import logging
 from traceback import print_exception
 
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
@@ -14,12 +14,7 @@ from src.python_files.models.dao.message_dao import (
 from src.python_files.models.dao.user_dao import add_user, get_user
 from src.python_files.models.message import Message
 from src.python_files.models.submission import Submission
-from src.python_files.utils.constants import (
-	DIR,
-	FA_URL,
-	JOB_QUEUE,
-	STATUS,
-)
+from src.python_files.utils.constants import DIR, FA_URL, JOB_QUEUE, STATUS
 from src.python_files.utils.decorators import logger, single_execution
 from src.python_files.utils.fa_client import (
 	find_next_button,
@@ -27,7 +22,6 @@ from src.python_files.utils.fa_client import (
 	send_request,
 )
 from src.python_files.utils.filters import filter_submissions, get_from_file
-from src.python_files.utils.telegram_helpers import get_chat_id_from_file
 
 
 @logger
@@ -60,50 +54,16 @@ async def submissions_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 			job_queue.notify()
 			return
 
-			for message in messages:
-				image = get_image(message.image_id)
-
-				if image is None:
-					continue
-
-				keyboard = InlineKeyboardMarkup([
-					[
-						InlineKeyboardButton(
-							"✅ Approva",
-							callback_data=f"approve:{message.image_id}",
-						),
-						InlineKeyboardButton(
-							"❌ Rifiuta",
-							callback_data=f"reject:{message.image_id}",
-						),
-					]
-				])
-
-				text = (
-					f"{image.title}\n"
-					f"{image.submission_link}\n"
-					f"Invio previsto: {message.scheduled_at}"
-				)
-				try:
-					await context.bot.send_message(
-						chat_id=get_chat_id_from_file(DIR.GROUP_TEST),
-						text=text,
-						reply_markup=keyboard,
-					)
-					await asyncio.sleep(random.uniform(0.3, 0.6))
-				except Exception:
-					print("FUCK")
-
-			return
-
 		current_url = f"{FA_URL}/msg/submissions"
 		visited_urls: set[str] = set()
 		all_submissions: list[Submission] = []
 
-		while current_url:
-			if current_url in visited_urls:
-				break
+		await context.bot.send_chat_action(
+			chat_id=update.effective_chat.id,
+			action=ChatAction.TYPING,
+		)
 
+		while current_url and current_url not in visited_urls:
 			visited_urls.add(current_url)
 
 			response = await send_request(url=current_url)
@@ -115,11 +75,6 @@ async def submissions_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 		filtered_submissions: list[Submission] = filter_submissions(
 			all_submissions
-		)
-
-		await context.bot.send_chat_action(
-			chat_id=update.effective_chat.id,
-			action=ChatAction.TYPING,
 		)
 
 		await asyncio.sleep(2)
@@ -163,9 +118,6 @@ async def submissions_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 		)
 
 	except Exception as e:
-		print_exception(e)
-
-		await status_message.edit_text(
-			"Si è verificato un errore durante "
-			"il recupero delle submission."
-		)
+		error_msg = "Errore durante il recupero delle submission"
+		logging.error(error_msg, exc_info=e)
+		await status_message.edit_text(error_msg)

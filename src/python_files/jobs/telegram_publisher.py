@@ -1,12 +1,17 @@
-import time
-from datetime import datetime
+import asyncio
 
-from telegram import Message
+from telegram import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from telegram.constants import ChatType
+from telegram.error import BadRequest, RetryAfter
 from telegram.ext import Application, ExtBot
 
+from src.python_files.commands.handlers.handle_message import handle_message
+from src.python_files.models.image import Image
 from src.python_files.models.submission import Submission
-from src.python_files.utils.constants import DIR
-from src.python_files.utils.telegram_helpers import get_chat_id_from_file
+from src.python_files.models.user import User
+from src.python_files.utils.constants import DIR, FA_URL
+from src.python_files.utils.fa_client import prepare_img_to_send
+from src.python_files.utils.telegram_helpers import get_chat_id_from_file, format_text, confirm_reject_keyboard
 
 
 class TelegramPublisher:
@@ -16,81 +21,50 @@ class TelegramPublisher:
 	def __init__(self, application: Application) -> None:
 		self._bot: ExtBot = application.bot
 
-	async def send_to_group(self, submission:Submission) -> Message:
-		image = submission.image
-
-		text = (
-			f"{image.submission_link} - "
-			f"{image.title} - "
-			f"{self.beautify_date(submission.message.scheduled_at)}"
-		)
-
-		message: Message = await self._bot.send_message(
-			chat_id=self.GROUP_ID,
-			text=text,
-		)
-
-		print(
-			f"Messaggio inviato {message.message_id} "
-			f"al gruppo {message.chat.title}"
-		)
-		return message
-
-	async def send_to_channel(self, submission:Submission) -> Message:
-		image = submission.image
-
-		text = (
-			f"{image.submission_link} - "
-			f"{image.title}"
-		)
-
-		message:Message = await self._bot.send_message(
-			chat_id=self.CHANNEL_ID,
-			text=text,
-		)
-
-		print(
-			f"Messaggio inviato {message.message_id} "
-			f"al canale {message.chat.title}"
-		)
-
-		return message
-
 	@staticmethod
-	def beautify_date(date:datetime | None) -> str:
-		if date is None:
-			return "Non programmato"
+	def _configure_keyboard(submission:Submission, chat:ChatType) -> InlineKeyboardMarkup:
+		user:User = submission.user
+		image:Image = submission.image
 
-		return date.strftime("%d/%m/%Y %H:%M")
+		if chat == ChatType.CHANNEL:
+			return InlineKeyboardMarkup([
+				[
+					InlineKeyboardButton(
+					text=f"{user.display_name}", url=f"{user.link}"
+					),
+					InlineKeyboardButton(
+						text=f"🔗 Apri il link", url=f"{image.submission_link}"
+					)
+				]
+			])
+		else:
+			return InlineKeyboardMarkup([
+				[
+					InlineKeyboardButton(
+						text=f"Status: {submission.message.status}", callback_data="None"
+					),
+					confirm_reject_keyboard(image_id=image.image_id)
+				]
+			])
 
 
-	async def send_to_group_2(self, submission: Submission) -> Message:
-		image = submission.image
+	async def send_message(self, submission:Submission, chat:ChatType) -> Message:
+		text:str = format_text(submission=submission, chat=chat)
+		image:Image = await prepare_img_to_send(submission.image)
+		photo:str
+		chat_id:int
+		keyboard:InlineKeyboardMarkup = self._configure_keyboard(chat)
 
-		text = (
-			f"{image.submission_link} - "
-			f"{image.title} - "
-			f"{self.beautify_date(submission.message.scheduled_at)}"
+		if chat == ChatType.GROUP:
+			photo = image.sd_image_link
+			chat_id = self.GROUP_ID
+		else:
+			photo = image.hd_image_link
+			chat_id = self.CHANNEL_ID
+
+		return await self._bot.send_photo(
+			chat_id=chat_id,
+			caption=text,
+			photo=photo,
+			reply_markup=keyboard
 		)
-
-		print(f"INVIO: {image.image_id}")
-		start = time.monotonic()
-
-		try:
-			message: Message = await self._bot.send_message(
-				chat_id=self.GROUP_ID,
-				text=text,
-			)
-		except Exception:
-			print(
-				f"ERRORE dopo {time.monotonic() - start:.2f}s: "
-				f"{image.image_id}"
-			)
-			raise
-
-		print(
-			f"OK dopo {time.monotonic() - start:.2f}s: "
-			f"{image.image_id}"
-		)
-
-		return message

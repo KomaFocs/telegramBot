@@ -19,6 +19,12 @@ def add_message(messaggio:Message) -> None:
 
 
 def get_messages(scheduled: bool) -> list[Message]:
+	"""Restituisce una lista di messaggi.
+	:param scheduled: stabilisce quali messaggi restituire.
+		True -> messaggi programmati da inviare sul canale.
+		False -> messaggi non ancora programmati.
+	"""
+
 	with get_session() as session:
 		statement = (
 			select(Message)

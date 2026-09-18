@@ -1,6 +1,7 @@
 # Files
 secrets/
 txt_files
+test/
 
 # Python
 .venv

@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import Event
 from datetime import date, datetime, timedelta
 
 from src.python_files.jobs.telegram_publisher import TelegramPublisher
@@ -15,9 +16,10 @@ class JobQueue:
 	BATCH_SIZE: int = 5
 
 	def __init__(self, publisher: TelegramPublisher) -> None:
-		self._publisher = publisher
-		self._event = asyncio.Event()
-		self._running = True
+		self._publisher:TelegramPublisher = publisher
+		self._event:Event = asyncio.Event()
+		self._running:bool = True
+		self._queue:list[Message] = []
 
 	def stop(self) -> None:
 		self._running = False
@@ -30,22 +32,19 @@ class JobQueue:
 		await self._recover_queue()
 
 		while self._running:
-			await self._start_next_batch()
-			messages = get_messages(scheduled=True)
+			if not self._queue:
+				self._queue = self._next_batch()
 
-			if not messages:
+			if not self._queue:
 				await self._event.wait()
 				self._event.clear()
 				continue
 
-			message = messages[0]
-
+			message:Message = self._queue[0]
 			if message.scheduled_at is None:
 				continue
 
-			delay = (
-					message.scheduled_at - datetime.now()
-			).total_seconds()
+			delay = (message.scheduled_at - datetime.now()).total_seconds()
 
 			try:
 				await asyncio.wait_for(
@@ -54,11 +53,14 @@ class JobQueue:
 				)
 				self._event.clear()
 
+			# Nota bene:
+			# quando asyncio.wait_for() termina, lancia TimeoutError
+			# Non è un eccezione nel senso di errore, bensì un comportamento atteso
 			except asyncio.TimeoutError:
 				submission = self._get_submission(message)
-
 				if submission is not None:
 					await self._execute(submission)
+				self._queue.pop(0)
 
 	async def _recover_queue(self) -> None:
 		messages: list[Message] = get_messages(scheduled=True)
@@ -67,19 +69,22 @@ class JobQueue:
 		for message in messages:
 			if message.scheduled_at is not None and message.scheduled_at <= now:
 				submission = self._get_submission(message)
-
 				if submission is not None:
 					await self._execute(submission)
 				else:
 					message.scheduled_at = None
 					update_message(message)
-				break
 
-	async def _start_next_batch(self) -> None:
+	def _next_batch(self) -> list[Message]:
+		"""Restituisce una lista di messaggi.
+		Se non ci sono messaggi da inviare al canale, genera un nuovo batch di messaggi."""
+		messages: list[Message] = get_messages(scheduled=True)
+		if messages:
+			return messages
+
 		messages: list[Message] = get_messages(scheduled=False)
-
 		if not messages:
-			return
+			return []
 
 		batch = messages[:self.BATCH_SIZE]
 		slots = self._get_available_slots(len(batch))
@@ -91,22 +96,23 @@ class JobQueue:
 			if submission is None:
 				continue
 
-			await self._publisher.send_to_group(submission)
+			#await self._publisher.send_to_group(submission)
 			message.sent_in_group = True
 			update_message(message)
 
-	@staticmethod
-	def _get_next_message() -> Message | None:
-		messages: list[Message] = get_messages(scheduled=True)
+		return batch
 
-		for message in messages:
-			if message.scheduled_at is not None:
-				return message
+	async def _execute(self, submission: Submission) -> None:
+		"""Esegue solo l'invio al canale e l'aggiornamento dello stato."""
+		await self._publisher.send_to_channel(submission)
 
-		return None
+		submission.message.status = STATUS.SENT
+		submission.message.scheduled_at = None
+		update_message(submission.message)
 
 	@staticmethod
 	def _get_available_slots(count: int) -> list[datetime]:
+		"""Restituisce una lista di slot disponibili."""
 		occupied: set[datetime] = {
 			message.scheduled_at
 			for message in get_messages(scheduled=True)
@@ -122,11 +128,7 @@ class JobQueue:
 
 		while len(slots) < count and days_checked < max_days:
 			for orario in ORARI:
-				time_value = orario.value if hasattr(orario, "value") else orario
-				scheduled_at = datetime.combine(
-					current_date,
-					time_value,
-				)
+				scheduled_at = datetime.combine(current_date, orario.value)
 
 				if scheduled_at <= now:
 					continue
@@ -156,16 +158,3 @@ class JobQueue:
 				message=message,
 			)
 		)
-
-	async def _execute(self, submission: Submission) -> None:
-		await self._publisher.send_to_channel(submission)
-
-		submission.message.status = STATUS.SENT
-		submission.message.scheduled_at = None
-
-		update_message(submission.message)
-
-		remaining = get_messages(scheduled=True)
-
-		if not remaining:
-			await self._start_next_batch()

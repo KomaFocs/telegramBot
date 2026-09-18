@@ -114,9 +114,8 @@ async def prepare_img_to_send(image:Image) -> Image:
 	link = image.submission_link
 	response = await send_request(link)
 	if not response:
-		image.sd_image_link = link
 		return image
 
 	link = parse_hd_image(response)
-	image.sd_image_link = link
+	image.hd_image_link = link
 	return image
