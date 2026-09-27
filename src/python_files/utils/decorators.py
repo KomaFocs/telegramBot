@@ -1,9 +1,13 @@
 import datetime
 from functools import wraps
 from typing import Callable, Any
+
+from sqlalchemy.exc import IntegrityError
 from telegram import Update, User
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
+
+from src.python_files.config.database import get_session
 
 _processing_users:set[int] = set()
 def single_execution(fallback_message:str = "⏳ Aspetta prima di inviare un altro comando!", verbose:bool = True):
@@ -59,3 +63,16 @@ def chat_action(action:ChatAction = ChatAction.TYPING):
 		return wrapper
 	return decorator
 
+
+def integrity_error(func:Callable[..., Any]) -> Callable[..., Any]:
+	"""Ignora silenziosamente IntegrityError facendo rollback"""
+	@wraps(func)
+	def wrapper(*args, **kwargs):
+		with get_session() as session:
+			try:
+				return func(*args, **kwargs)
+			except IntegrityError:
+				session.rollback()
+				return None
+
+	return wrapper

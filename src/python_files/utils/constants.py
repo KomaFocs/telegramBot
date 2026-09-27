@@ -6,6 +6,7 @@ from pathlib import Path
 MINI_APP_PREFIX:str = "from-mini-app_"
 PAROLA:str = "macro"
 FA_URL:str = "https://www.furaffinity.net"
+FA_SUBMISSIONS:str = f"{FA_URL}/msg/submissions"
 USER_URL:str = f"{FA_URL}/user"
 
 HIOSHIRU_FILE:str = "hioshiru_stickers.txt"
@@ -104,3 +105,13 @@ class HTML_TAG(StrEnum):
 	AUTHOR = "p i + a"
 	NEXT_PAGE = "a.button.more"
 	HD_IMAGE = "#submissionImg"
+
+
+class CALLBACKS(StrEnum):
+	PROMPT_REJECT = "prompt_reject"
+	DO_REJECT = "do_reject"
+
+	PROMPT_APPROVE = "prompt_approve"
+	DO_APPROVE = "do_approve"
+
+	NONE = "none"

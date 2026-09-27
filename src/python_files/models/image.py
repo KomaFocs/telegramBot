@@ -52,6 +52,6 @@ class Image(Base):
 		nullable=False,
 	)
 
-	users:Mapped["User"] = relationship(
+	user:Mapped["User"] = relationship(
 		back_populates=DATABASE_TABLES.IMAGES,
 	)

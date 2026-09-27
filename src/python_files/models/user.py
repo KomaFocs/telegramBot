@@ -12,18 +12,18 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = DATABASE_TABLES.USERS
 
-    username: Mapped[str] = mapped_column(
+    username:Mapped[str] = mapped_column(
         String,
         primary_key=True,
     )
 
-    display_name: Mapped[str] = mapped_column(
+    display_name:Mapped[str] = mapped_column(
         String,
         nullable=False,
     )
 
     images:Mapped[list["Image"]] = relationship(
-        back_populates=DATABASE_TABLES.USERS,
+        back_populates="user",
     )
 
     @property

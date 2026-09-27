@@ -5,11 +5,13 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Tag
 
+from src.python_files.models.dao.submission_dao import SubmissionDAO
 from src.python_files.models.image import Image
 from src.python_files.models.message import Message
 from src.python_files.models.submission import Submission
 from src.python_files.models.user import User
-from src.python_files.utils.constants import DIR, FA_URL, HTML_TAG
+from src.python_files.utils.constants import DIR, FA_URL, HTML_TAG, FA_SUBMISSIONS, STATUS
+from src.python_files.utils.filters import filter_submissions
 
 
 def get_cookies() -> dict | None:
@@ -20,6 +22,9 @@ def get_cookies() -> dict | None:
 
 
 async def send_request(url:str) -> Response | None:
+	if url.startswith("/view"):
+		url = f"{FA_URL}{url}"
+
 	async with httpx.AsyncClient(cookies=get_cookies(), follow_redirects=True) as client:
 		try:
 			return await client.get(url, timeout=60)
@@ -39,8 +44,12 @@ def get_all_submissions(response:Response) -> list[Submission] | None:
 	for tag in soup.select(HTML_TAG.FIGURE):
 		user:User = get_user(tag)
 		img:Image = get_image(tag, user.username)
-		message:Message = Message(
-			image_id = img.image_id
+		message: Message = Message(
+			image_id=img.image_id,
+			username=user.username,
+			status=STATUS.PENDING,
+			sent_in_group=False,
+			channel_message_id=None
 		)
 
 		submissions.append(
@@ -75,15 +84,17 @@ def get_image(html_tag:Tag, username:str) -> Image | None:
 	image_id = int(href.split("/")[2])
 	source = image[HTML_TAG.SOURCE]
 	timestamp = int(source.rsplit("-", 1)[1].split(".",1)[0])
+	full_link:str = f"{FA_URL}{href}" if href.startswith("/") else href
+	sd_link:str = f"https:{source}"
 
 	return Image(
 		image_id=image_id,
 		username=username,
 		title=view[HTML_TAG.TITLE].strip(),
 		tags=get_tags(html_tag),
-		submission_link=href,
+		submission_link=full_link,
 		submission_date=datetime.fromtimestamp(timestamp),
-		sd_image_link=f"https:{source}"
+		sd_image_link=sd_link
 	)
 
 
@@ -119,3 +130,26 @@ async def prepare_img_to_send(image:Image) -> Image:
 	link = parse_hd_image(response)
 	image.hd_image_link = link
 	return image
+
+
+async def fetch_images_from_furaffinity(url:str = f"{FA_SUBMISSIONS}") -> None:
+	visited_urls:set[str] = set()
+	all_submissions:list[Submission] = []
+
+	while url and url not in visited_urls:
+		visited_urls.add(url)
+
+		response:Response = await send_request(url=url)
+		if not response:
+			break
+
+		url = find_next_button(response=response)
+		all_submissions.extend(get_all_submissions(response=response))
+
+	filtered_submissions:list[Submission] = filter_submissions(images=all_submissions)
+
+	for filtered in filtered_submissions:
+		existing:Submission = SubmissionDAO.get_submission_by_id(filtered.image.image_id)
+		if not existing:
+			SubmissionDAO.add_submission(filtered)
+

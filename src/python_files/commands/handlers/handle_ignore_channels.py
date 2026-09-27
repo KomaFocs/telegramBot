@@ -1,8 +1,6 @@
-from telegram import Update, Chat
+from telegram import Update
 from telegram.constants import ChatType
 from telegram.ext import ContextTypes, ApplicationHandlerStop
-
-from src.python_files.utils.log import time_log
 
 
 async def ignora_canali(update:Update, context:ContextTypes.DEFAULT_TYPE) -> None:
@@ -13,7 +11,3 @@ async def ignora_canali(update:Update, context:ContextTypes.DEFAULT_TYPE) -> Non
 	if chat.type == ChatType.CHANNEL:
 		# time_log(f"[({update.effective_chat.id})-({update.effective_chat.title})]")
 		raise ApplicationHandlerStop
-
-async def debug(update:Update, context:ContextTypes.DEFAULT_TYPE) -> None:
-	pass
-	# print(f"-- {update.effective_chat.type} --")

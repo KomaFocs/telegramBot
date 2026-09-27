@@ -1,16 +1,18 @@
 from enum import Enum
 
-from src.python_files.commands.furaffinity import furaffinity_command
-from src.python_files.commands.submissions import submissions_command
+from src.python_files.commands.furaffinity_command import furaffinity_command
+from src.python_files.commands.submissions_command import submissions_command
 from src.python_files.commands.simple_commands.img import img_command
 from src.python_files.commands.simple_commands.meglio import meglio_command
 from src.python_files.commands.simple_commands.start import start_command
 from src.python_files.commands.simple_commands.guida import guida_command
+from src.python_files.commands.simple_commands.my_id import my_id
 
 class Nome_Comandi(str, Enum):
 	START = "start"
 	MEGLIO = "meglio"
 	IMG = "img"
+	MY_ID = "my_id"
 	FURAFFINITY = "furaffinity"
 	SUBMISSIONS = "submissions"
 	GUIDA = "guida"
@@ -23,6 +25,7 @@ COMANDI = {
 	Nome_Comandi.START.value: (start_command, "🏃🏽‍➡️ Avvia il bot"),
 	Nome_Comandi.MEGLIO.value: (meglio_command, "🗣️ Ti dico cos'è meglio"),
 	Nome_Comandi.IMG.value: (img_command, "🗾 Ti invio un'immagine"),
+	Nome_Comandi.MY_ID.value: (my_id, "Ti mando informazioni relative al tuo account Telegram"),
 	Nome_Comandi.FURAFFINITY.value: (furaffinity_command, "🎨 Ti invio una foto da Furaffinity."),
 	Nome_Comandi.SUBMISSIONS.value: (submissions_command, "🚫 Riservato a Piano e Koma. Per favore non usarlo."),
 	Nome_Comandi.GUIDA.value: (guida_command, "📜 Ti spiego in dettaglio le funzioni.")

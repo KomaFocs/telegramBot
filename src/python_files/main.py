@@ -5,7 +5,7 @@ from telegram.request import HTTPXRequest
 from src.python_files.commands.handlers.handle_callback import handle_callback
 from src.python_files.commands.handlers.handle_message import handle_message
 from src.python_files.commands.handlers.handle_sticker import handle_sticker
-from src.python_files.commands.handlers.handle_ignore_channels import ignora_canali, debug
+from src.python_files.commands.handlers.handle_ignore_channels import ignora_canali
 from src.python_files.commands.mini_app import open_app
 from src.python_files.config.lista_comandi import COMANDI
 from src.python_files.errors.error import error
@@ -39,9 +39,6 @@ if __name__ == "__main__":
 		.concurrent_updates(True)
 		.build()
 	)
-
-	# Ignora i messaggi nei canali
-	app.add_handler(TypeHandler(Update, debug), group=-90)
 
 	# Ignora i messaggi nei canali
 	app.add_handler(TypeHandler(Update, ignora_canali), group=-10)

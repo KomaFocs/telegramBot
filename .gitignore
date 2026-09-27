@@ -2,6 +2,7 @@
 secrets/
 txt_files
 test/
+*.DS_Store
 
 # Python
 .venv
