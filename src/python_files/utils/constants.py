@@ -40,17 +40,19 @@ class DIR:
 	TXT_FILES = SRC / "txt_files"
 	PYTHON_FILES = SRC / "python_files"
 	DATABASE_FILES = SECRETS / "database_files"
+	FILTER_FILES = SECRETS / "filter_files"
 	BACKUP_FILES = DATABASE_FILES / "backup_files"
 
 	DATABASE = DATABASE_FILES / "bot.db"
-
 	RESTORE_FILE = DATABASE_FILES / "restore_file.txt"
+
 	COOKIES_FILE = SECRETS / "cookies.txt"
-	BLACKLIST_FILE = TXT_FILES / "blacklist.txt"
-	WHITELIST_FILE = TXT_FILES / "whitelist.txt"
 	TOKEN_FILE = SECRETS / "token.txt"
 	SPECIES_FILE = SECRETS / "species.txt"
 	PRIORITY_TAGS_FILE = SECRETS / "priority_tags.txt"
+
+	BLACKLIST_FILE = FILTER_FILES / "blacklist.txt"
+	WHITELIST_FILE = FILTER_FILES / "whitelist.txt"
 
 	CHANNEL_MACROMICROITALIA = CHATS / "canale_macromicroitalia.txt"
 	CHANNEL_TEST = CHATS / "canale_test.txt"

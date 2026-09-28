@@ -41,11 +41,21 @@ class TelegramPublisher:
 				photo=photo,
 				reply_markup=keyboard
 			)
+
 			if chat_type == ChatType.GROUP:
-				submission.message.sent_in_group = True
+				submission.message.sent_in_group = message.message_id
 			elif chat_type == ChatType.CHANNEL:
 				submission.status = STATUS.SENT
 				submission.message.channel_message_id = message.message_id
+
+				if submission.message.sent_in_group:
+					try:
+						await self._bot.delete_message(
+							chat_id=chat_id,
+							message_id=submission.message.sent_in_group
+						)
+					except Exception as e:
+						print(f"Errore durante l'eliminazione del messaggio {submission.message.sent_in_group}\n\n{e}")
 
 			SubmissionDAO.update_submission(submission=submission)
 			return message

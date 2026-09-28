@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Boolean, Enum
+from sqlalchemy import ForeignKey, Enum, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.python_files.models.base import Base
@@ -22,10 +22,9 @@ class Message(Base):
 		ForeignKey(f"{DATABASE_TABLES.USERS}.{DATABASE_TABLE_ID.OF_USERS}"),
 		nullable=False,
 	)
-	sent_in_group: Mapped[bool] = mapped_column(
-		Boolean,
-		default=False,
-		nullable=False,
+	sent_in_group: Mapped[int | None] = mapped_column(
+		Integer,
+		nullable=True,
 	)
 	channel_message_id: Mapped[int | None] = mapped_column(
 		nullable=True,

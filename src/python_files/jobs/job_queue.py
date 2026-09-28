@@ -9,7 +9,6 @@ from src.python_files.jobs.telegram_publisher import TelegramPublisher
 from src.python_files.utils.constants import ORARI, STATUS
 from src.python_files.models.submission import Submission
 from src.python_files.models.dao.submission_dao import SubmissionDAO
-from src.python_files.utils.telegram_helpers import beautify_date
 
 
 class JobQueue:
@@ -63,7 +62,7 @@ class JobQueue:
 			# NOTA BENE: asyncio.wait_for() lancia TimeoutError al termine
 			# Non è un errore, bensì un comportamento atteso
 			except asyncio.TimeoutError:
-				submission = SubmissionDAO.get_submission_by_id(submission.message.image_id)
+				submission = SubmissionDAO.get_submission_by_id(submission.image_id)
 				if (
 					submission is not None and
 					submission.message.status in [STATUS.PENDING, STATUS.APPROVED]
@@ -97,7 +96,7 @@ class JobQueue:
 		if remaining:
 			slots:list[datetime] = self._get_available_slots(len(remaining))
 			for sub, new_slot in zip(remaining, slots):
-				sub.message.scheduled_at = new_slot
+				sub.scheduled_at = new_slot
 				SubmissionDAO.update_submission(sub)
 
 
@@ -138,8 +137,8 @@ class JobQueue:
 
 				except Exception as e:
 					print(f"Errore per la submission {submission.image_id}\n\nStacktrace: {e}")
-					submission.message.sent_in_group = False
-					submission.message.scheduled_at = None
+					submission.message.sent_in_group = None
+					submission.scheduled_at = None
 
 			if not added:
 				break
@@ -156,9 +155,10 @@ class JobQueue:
 	def _get_available_slots(count: int) -> list[datetime]:
 		"""Restituisce una lista di slot disponibili."""
 		occupied: set[datetime] = {
-			submission.message.scheduled_at
+			submission.scheduled_at
 			for submission in SubmissionDAO.get_submissions(scheduled=True)
-			if submission.message.scheduled_at is not None and submission.message.sent_in_group
+			if submission.scheduled_at
+			and submission.message.sent_in_group
 		}
 
 		slots: list[datetime] = []

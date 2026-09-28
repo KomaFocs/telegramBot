@@ -116,15 +116,15 @@ class SubmissionDAO:
 			)
 
 			if scheduled:
-				# CANALE: deve essere stato inviato nel gruppo E avere una data
+				# CANALE: deve essere stato inviato nel gruppo e avere una data
 				statement = statement.where(
-					Message.sent_in_group == True,
+					Message.sent_in_group.is_not(None),
 					Message.scheduled_at.is_not(None)
 				).order_by(Message.scheduled_at.asc())
 			else:
 				# GRUPPO: qualsiasi messaggio non ancora inviato nel gruppo
 				statement = statement.where(
-					Message.sent_in_group == False
+					Message.sent_in_group.is_(None)
 				).order_by(Message.image_id.asc())
 
 			messages = session.scalars(statement).unique().all()
@@ -153,7 +153,7 @@ class SubmissionDAO:
 			statement = (
 				select(Message)
 				.where(
-					Message.sent_in_group == True,
+					Message.sent_in_group.is_not(None),
 					Message.channel_message_id.is_(None),
 				)
 			)
@@ -181,7 +181,7 @@ class SubmissionDAO:
 			messages = session.scalars(statement).all()
 
 			for message in messages:
-				message.sent_in_group = False
+				message.sent_in_group = None
 				message.status = STATUS.PENDING
 				message.scheduled_at = None
 				message.channel_message_id = None
