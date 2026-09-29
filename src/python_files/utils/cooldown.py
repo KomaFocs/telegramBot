@@ -3,12 +3,20 @@ from telegram import Update
 from telegram.ext import ContextTypes, ApplicationHandlerStop
 from src.python_files.utils.constants import DEFAULT_STUN_DURATION, STUNNED_STRING, DELETE_INCOMING_MESSAGES
 
+def _check_context_user_data(context:ContextTypes.DEFAULT_TYPE):
+	return context.user_data
 
 def stun_bot(context:ContextTypes.DEFAULT_TYPE, user_id:int=-1, duration:int=DEFAULT_STUN_DURATION) -> None:
+	if not _check_context_user_data(context):
+		return
+
 	context.user_data[STUNNED_STRING] = time.time() + duration
 
 
 def is_bot_stunned(context:ContextTypes.DEFAULT_TYPE, user_id:int=-1) -> tuple[bool, int]:
+	if not _check_context_user_data(context):
+		return False, 0
+
 	stunned_until = context.user_data.get(STUNNED_STRING, 0)
 
 	now = time.time()
@@ -19,6 +27,9 @@ def is_bot_stunned(context:ContextTypes.DEFAULT_TYPE, user_id:int=-1) -> tuple[b
 
 
 async def stunned(update:Update, context:ContextTypes.DEFAULT_TYPE) -> None:
+	if not _check_context_user_data(context):
+		return
+
 	bot_stunned = is_bot_stunned(context)[0]
 	deleting = context.user_data.get(DELETE_INCOMING_MESSAGES, False)
 

@@ -21,6 +21,7 @@ JOB_QUEUE:str = "job_queue"
 JOB_QUEUE_TASK:str = "job_queue_task"
 
 MAX_BACKUPS:int = 3
+SPIEGONE_ELIMINAZIONE:str = "spiegone_eliminazione"
 
 class DIR:
 	@staticmethod
@@ -45,6 +46,7 @@ class DIR:
 
 	DATABASE = DATABASE_FILES / "bot.db"
 	RESTORE_FILE = DATABASE_FILES / "restore_file.txt"
+	ADMINS = SECRETS / "id.txt"
 
 	COOKIES_FILE = SECRETS / "cookies.txt"
 	TOKEN_FILE = SECRETS / "token.txt"
@@ -117,3 +119,4 @@ class CALLBACKS(StrEnum):
 	DO_APPROVE = "do_approve"
 
 	NONE = "none"
+	PUBLISH_POLL = "publish_poll"

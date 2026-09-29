@@ -141,12 +141,25 @@ async def safe_edit_markup(query: CallbackQuery, reply_markup: InlineKeyboardMar
 		pass
 
 
+def get_spiegone() -> str:
+	_LIMIT:int = 200
+	_SPIEGONE:str = (
+		"Telegram impedisce al bot di eliminare i messaggi più vecchi di 48 ore. Se desideri "
+		"eliminare un tale messaggio, dovrai farlo manualmente."
+	)
+	return (
+		_SPIEGONE
+		if len(_SPIEGONE) <= _LIMIT
+		else f"{_SPIEGONE[:_LIMIT-3].rsplit(' ', 1)[0]}..."
+	)
+
 
 def _clean_text(text: str, strict: bool) -> str:
 	_MARKDOWN_TRANSLATE_TABLE= str.maketrans("", "", "*_~`>")
 	if strict:
 		return text.translate(_MARKDOWN_TRANSLATE_TABLE)
 	return text
+
 
 def grassetto(text:str, strict:bool=False) -> str:
 	return f"*{_clean_text(text, strict)}*"

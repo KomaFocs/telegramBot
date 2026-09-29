@@ -1,5 +1,5 @@
 from telegram import Update, User as TelegramUser, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.constants import ChatType
+from telegram.constants import ChatType, ParseMode
 from telegram.ext import ContextTypes
 
 from src.python_files.utils.telegram_helpers import grassetto
@@ -27,7 +27,7 @@ async def my_id(update:Update, context:ContextTypes.DEFAULT_TYPE) -> str|None:
 
 		await update.effective_chat.send_message(
 			text=response,
-			parse_mode="markdown",
+			parse_mode=ParseMode.MARKDOWN_V2,
 			reply_markup=keyboard
 		)
 

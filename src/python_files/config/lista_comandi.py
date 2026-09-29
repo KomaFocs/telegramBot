@@ -3,6 +3,7 @@ from enum import Enum
 from src.python_files.commands.furaffinity_command import furaffinity_command
 from src.python_files.commands.submissions_command import submissions_command
 from src.python_files.commands.simple_commands.img import img_command
+from src.python_files.commands.poll import poll_command
 from src.python_files.commands.simple_commands.meglio import meglio_command
 from src.python_files.commands.simple_commands.start import start_command
 from src.python_files.commands.simple_commands.guida import guida_command
@@ -12,6 +13,7 @@ class Nome_Comandi(str, Enum):
 	START = "start"
 	MEGLIO = "meglio"
 	IMG = "img"
+	POLL = "poll"
 	MY_ID = "my_id"
 	FURAFFINITY = "furaffinity"
 	SUBMISSIONS = "submissions"
@@ -25,6 +27,7 @@ COMANDI = {
 	Nome_Comandi.START.value: (start_command, "🏃🏽‍➡️ Avvia il bot"),
 	Nome_Comandi.MEGLIO.value: (meglio_command, "🗣️ Ti dico cos'è meglio"),
 	Nome_Comandi.IMG.value: (img_command, "🗾 Ti invio un'immagine"),
+	Nome_Comandi.POLL.value: (poll_command, "📝 Crea un sondaggio"),
 	Nome_Comandi.MY_ID.value: (my_id, "Ti mando informazioni relative al tuo account Telegram"),
 	Nome_Comandi.FURAFFINITY.value: (furaffinity_command, "🎨 Ti invio una foto da Furaffinity."),
 	Nome_Comandi.SUBMISSIONS.value: (submissions_command, "🚫 Riservato a Piano e Koma. Per favore non usarlo."),

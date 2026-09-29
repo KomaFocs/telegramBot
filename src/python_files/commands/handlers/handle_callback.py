@@ -3,12 +3,14 @@ from asyncio import Task
 from collections.abc import Callable
 
 from telegram import CallbackQuery, InlineKeyboardMarkup, Message as TelegramMessage, Update
+from telegram.constants import ChatType
 from telegram.ext import ContextTypes
 
+from src.python_files.jobs.telegram_publisher import TelegramPublisher
 from src.python_files.models.dao.submission_dao import SubmissionDAO
 from src.python_files.models.submission import Submission
-from src.python_files.utils.constants import CALLBACKS, JOB_QUEUE, STATUS
-from src.python_files.utils.telegram_helpers import safe_edit_markup
+from src.python_files.utils.constants import CALLBACKS, JOB_QUEUE, STATUS, SPIEGONE_ELIMINAZIONE
+from src.python_files.utils.telegram_helpers import safe_edit_markup, get_spiegone
 from src.python_files.utils.submission_helpers import get_group_keyboard, get_countdown_keyboard
 
 pending_confirmations: dict[int, Task] = {}
@@ -60,17 +62,44 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 	data = query.data or ""
 	split_data = data.lower().split(":", 1)
 
+	if SPIEGONE_ELIMINAZIONE in split_data:
+		await query.answer(
+			text=get_spiegone(),
+			show_alert=True
+		)
+		return
+
 	if len(split_data) < 2 or split_data[0] == CALLBACKS.NONE or split_data[1] == CALLBACKS.NONE:
-		text = ""
-		if query.message.reply_markup:
+		if query.message and query.message.reply_markup:
 			for row in query.message.reply_markup.inline_keyboard:
 				for button in row:
 					if button.callback_data == query.data:
 						text = button.text
-						break
+						await query.answer(text=text)
+						return
 
-		await query.answer(text)
+		await query.answer()
 		return
+
+	action:str = split_data[0]
+	if action == CALLBACKS.PUBLISH_POLL:
+		if not query.message.poll:
+			await query.answer(text="Nessun sondaggio trovato", show_alert=True)
+			return
+
+		poll_data = [query.message.poll.question] + [opt.text for opt in query.message.poll.options]
+		sent = await (
+			TelegramPublisher(application=context.application)
+			   .send_poll(
+				chat_type=ChatType.CHANNEL,
+				poll=poll_data
+			)
+		)
+		msg:str = "Sondaggio pubblicato!" if sent else "Errore nella pubblicazione del sondaggio."
+		alert:bool = False if sent else True
+		await query.answer(text=msg, show_alert=alert)
+		return
+
 
 	try:
 		image_id = int(split_data[1])
@@ -97,7 +126,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 		existing_task.cancel()
 
 	job_queue = context.bot_data.get(JOB_QUEUE)
-	action: str = split_data[0]
 
 	match action:
 		case CALLBACKS.PROMPT_REJECT | CALLBACKS.PROMPT_APPROVE:
@@ -151,6 +179,3 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 				reply_markup=get_group_keyboard(submission=submission)
 			)
 			await query.answer(f"Messaggio {submission.image_id} di {submission.user} approvato.")
-
-		case CALLBACKS.NONE:
-			await query.answer()

@@ -1,6 +1,7 @@
 import logging
 
 from telegram import Update, Message as TelegramMessage
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from src.python_files.jobs.post_init import check_pending_messages
@@ -40,7 +41,10 @@ async def submissions_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 		])
 		text = f"Ho trovato le seguenti immagini da pubblicare:\n{text}"
 
-		await status_message.edit_text(text=text, parse_mode="Markdown")
+		await status_message.edit_text(
+			text=text,
+			parse_mode=ParseMode.MARKDOWN_V2
+		)
 
 	except Exception as e:
 		error_msg = "Errore durante il recupero delle submission"
