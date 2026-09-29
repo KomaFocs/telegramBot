@@ -1,4 +1,5 @@
 import asyncio
+import random
 from asyncio import Event
 from datetime import date, datetime, timedelta
 
@@ -172,11 +173,19 @@ class JobQueue:
 			for orario in ORARI:
 				scheduled_at = datetime.combine(current_date, orario.value)
 
+				is_occupied = any(
+					occ.date() == scheduled_at.date() and occ.hour == scheduled_at.hour
+					for occ in occupied
+				)
+
+				if is_occupied:
+					continue
+
 				if scheduled_at <= now:
 					continue
 
-				if scheduled_at in occupied:
-					continue
+				offset_minutes:float = random.uniform(0,15)
+				scheduled_at = scheduled_at + timedelta(minutes=offset_minutes)
 
 				occupied.add(scheduled_at)
 				slots.append(scheduled_at)

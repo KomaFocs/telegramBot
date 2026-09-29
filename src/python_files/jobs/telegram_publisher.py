@@ -12,7 +12,7 @@ from src.python_files.utils.telegram_helpers import get_chat_id_from_file, forma
 
 class TelegramPublisher:
 	GROUP_ID:int = get_chat_id_from_file(DIR.GROUP_TEST)
-	CHANNEL_ID:int = get_chat_id_from_file(DIR.CHANNEL_TEST)
+	CHANNEL_ID:int = get_chat_id_from_file(DIR.CHANNEL_MACROMICROITALIA)
 
 	def __init__(self, application:Application) -> None:
 		self._bot: ExtBot = application.bot
