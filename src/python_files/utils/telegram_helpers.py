@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
+from telegram import CallbackQuery, InlineKeyboardMarkup, Message, Update
 from telegram.constants import ChatType
 from telegram.error import BadRequest, RetryAfter
 from telegram.ext import ContextTypes
@@ -12,11 +12,10 @@ from telegram.ext import ContextTypes
 from src.python_files.models.image import Image
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import (
-	CALLBACKS,
 	DEFAULT_STUN_DURATION,
 	DIR,
 	MAX_TAGS_IN_MESSAGE,
-	TAG_SEPARATOR, STATUS,
+	TAG_SEPARATOR,
 )
 
 
@@ -140,92 +139,6 @@ async def safe_edit_markup(query: CallbackQuery, reply_markup: InlineKeyboardMar
 		await query.edit_message_reply_markup(reply_markup=reply_markup)
 	except BadRequest:
 		pass
-
-
-
-def get_channel_keyboard(submission:Submission) -> InlineKeyboardMarkup:
-	return InlineKeyboardMarkup([
-		[
-			InlineKeyboardButton(
-				text=f"{submission.user.display_name}",
-				url=f"{submission.user.link}"
-			),
-			InlineKeyboardButton(
-				text=f"🔗 Apri il link",
-				url=f"{submission.image.submission_link}"
-			)
-		]
-	])
-
-
-def get_group_keyboard(submission:Submission) -> InlineKeyboardMarkup:
-	button_text:str = ""
-	callback_action:str = ""
-
-	match submission.status:
-		case STATUS.PENDING | STATUS.APPROVED:
-			button_text = "❌ Rifiuta"
-			callback_action = f"{CALLBACKS.PROMPT_REJECT}:{submission.image_id}"
-
-		case STATUS.REJECTED:
-			button_text = "✅ Approva"
-			callback_action = f"{CALLBACKS.PROMPT_APPROVE}:{submission.image_id}"
-
-		case _:
-			pass
-
-	return InlineKeyboardMarkup([
-		[
-			InlineKeyboardButton(
-				text=f"Stato: {submission.status_text}",
-				callback_data=f"{CALLBACKS.NONE}:{CALLBACKS.NONE}"
-			),
-			InlineKeyboardButton(
-				text=button_text,
-				callback_data=callback_action
-			)
-		]
-	])
-
-
-def get_countdown_keyboard(submission: Submission, seconds: int) -> InlineKeyboardMarkup:
-	"""Tastiera di conferma durante il countdown."""
-	text:str = ""
-	callback:str = ""
-
-	match submission.status:
-		case STATUS.REJECTED:
-			text = f"✅ Confermi? {seconds}s ⏰"
-			callback = f"{CALLBACKS.DO_APPROVE}:{submission.image_id}"
-
-		case STATUS.PENDING | STATUS.APPROVED:
-			text = f"❌ Confermi? {seconds}s ⏰"
-			callback = f"{CALLBACKS.DO_REJECT}:{submission.image_id}"
-
-		case _:
-			text = callback = f"{CALLBACKS.NONE}:{CALLBACKS.NONE}"
-
-
-	return InlineKeyboardMarkup([
-		[
-			InlineKeyboardButton(
-				text=text,
-				callback_data=f"{callback}"
-			)
-		]
-	])
-
-
-def get_submission_keyboard(submission:Submission, chat_type:ChatType) -> InlineKeyboardMarkup|None:
-	match chat_type:
-		case ChatType.GROUP:
-			return get_group_keyboard(submission)
-
-		case ChatType.CHANNEL:
-			return get_channel_keyboard(submission)
-
-		case _:
-			return None
 
 
 

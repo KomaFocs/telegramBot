@@ -8,9 +8,8 @@ from telegram.ext import ContextTypes
 from src.python_files.models.dao.submission_dao import SubmissionDAO
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import CALLBACKS, JOB_QUEUE, STATUS
-from src.python_files.utils.telegram_helpers import (
-	safe_edit_markup, get_countdown_keyboard, get_group_keyboard,
-)
+from src.python_files.utils.telegram_helpers import safe_edit_markup
+from src.python_files.utils.submission_helpers import get_group_keyboard, get_countdown_keyboard
 
 pending_confirmations: dict[int, Task] = {}
 

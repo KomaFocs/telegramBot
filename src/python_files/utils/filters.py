@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from src.python_files.models.image import Image
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import DIR, FILTER, TAG_SEPARATOR
 

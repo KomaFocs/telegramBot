@@ -7,7 +7,8 @@ from src.python_files.models.image import Image
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import DIR, STATUS
 from src.python_files.utils.fa_client import prepare_img_to_send
-from src.python_files.utils.telegram_helpers import get_chat_id_from_file, format_text, get_submission_keyboard
+from src.python_files.utils.telegram_helpers import get_chat_id_from_file, format_text
+from src.python_files.utils.submission_helpers import get_submission_keyboard
 
 
 class TelegramPublisher:
