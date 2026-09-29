@@ -29,7 +29,7 @@ async def poll_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Te
 		msg = (
 			f"Per creare un sondaggio devi scrivere: {codice_inline('/sondaggio <domanda>')} ? {codice_inline('<risposta 1> <risposta 2>')}\n"
 			f"Esempio: {grassetto('/sondaggio dove si trova Roma? Lazio Molise Campania Piemonte')}\n\n"
-			f"Importante: la prima risposta {grassetto('deve')} essere quella {sottolineato('corretta')}"
+			f"Importante: se è un quiz, la prima risposta {grassetto('deve')} essere quella {sottolineato('corretta')}"
 		)
 		await update.message.reply_text(
 			text=msg,
