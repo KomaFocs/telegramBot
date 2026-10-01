@@ -6,28 +6,31 @@ from src.python_files.utils.constants import (
 	MAX_TAGS_IN_MESSAGE,
 	TAG_SEPARATOR, CALLBACKS, STATUS, SPIEGONE_ELIMINAZIONE,
 )
-from src.python_files.utils.telegram_helpers import beautify_date, get_filtered_tags
+from src.python_files.utils.telegram_helpers import beautify_date, get_filtered_tags, rendi_hyperlink
 
 
 def format_text(submission: Submission, chat: ChatType) -> str:
-	text = f"{submission.image.title}\n\n"
+	text:str = rendi_hyperlink(
+		text=f"{submission.image.title}\n\n",
+		link=submission.image.submission_link,
+		strict=False
+	)
 
 	match chat:
 		case ChatType.GROUP:
-			text += beautify_date(submission.message.scheduled_at)
-
+			text += f"Previsto per: {beautify_date(submission.message.scheduled_at)}"
 		case ChatType.CHANNEL:
-			text += TAG_SEPARATOR.join(
-				get_filtered_tags(submission.image)[:MAX_TAGS_IN_MESSAGE]
-			)
-
+			text += TAG_SEPARATOR.join(get_filtered_tags(submission.image)[:MAX_TAGS_IN_MESSAGE])
 		case _:
 			text = "WTF"
 
 	return text
 
 
-def get_channel_keyboard(submission:Submission) -> InlineKeyboardMarkup:
+def get_channel_keyboard(submission:Submission) -> InlineKeyboardMarkup|None:
+	# Telegram impedisce agli utenti di aggiungere commenti al messaggio se è presente una tastiera
+	return None
+
 	return InlineKeyboardMarkup([
 		[
 			InlineKeyboardButton(

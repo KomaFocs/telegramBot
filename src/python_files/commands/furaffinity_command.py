@@ -8,7 +8,6 @@ from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from src.python_files.config.lista_tipi import FA_Type
-from src.python_files.models.image import Image
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import FA_URL
 from src.python_files.utils.decorators import chat_action,logger,single_execution
@@ -56,18 +55,18 @@ async def furaffinity_command(update:Update, context:ContextTypes.DEFAULT_TYPE) 
 			return
 
 		submissions:list[Submission] = get_all_submissions(response)
-		filtered:list[Image] = filter_submissions(submissions)
+		filtered:list[Submission] = filter_submissions(submissions)
 
 		if not filtered:
 			await status.edit_text("Non ho trovato immagini valide.")
 			return
 
-		first_submission:Image = filtered[0]
+		first_submission:Submission = filtered[0]
 
-		to_spoil, spoil_msg = check_for_blacklist(first_submission.tags)
+		to_spoil, spoil_msg = check_for_blacklist(first_submission.image.tags)
 
 		full_text: str = (
-			f"{first_submission.tags}\n{spoil_msg}"
+			f"{first_submission.image.tags}\n{spoil_msg}"
 		)
 
 		chat_id = update.effective_chat.id
@@ -83,7 +82,7 @@ async def furaffinity_command(update:Update, context:ContextTypes.DEFAULT_TYPE) 
 
 		await context.bot.send_photo(
 			chat_id=chat_id,
-			photo=first_submission.sd_image_link,
+			photo=first_submission.image.sd_image_link,
 			has_spoiler=to_spoil,
 			caption=full_text,
 		)

@@ -1,12 +1,10 @@
 import asyncio
 import random
 
-from sqlalchemy import text
 from telegram import Message as TelegramMessage, Update
 from telegram.constants import ChatAction, ChatType
 from telegram.ext import ContextTypes
 
-from src.python_files.config.database import get_session
 from src.python_files.models.dao.submission_dao import SubmissionDAO
 from src.python_files.utils.constants import PAROLA, DIR
 from src.python_files.utils.filters import get_from_file
@@ -60,8 +58,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 		response = random.choice(risposte)
 	elif "micro" in message_string:
 		response = meglio_macro
-	elif "aarg" == message_string:
-		response = count_tables()
 	elif "reset" == message_string:
 		user_id = str(update.effective_user.id)
 		allowed_ids = get_from_file(DIR.SECRETS / "id.txt")
@@ -80,14 +76,3 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 		reply_to_message_id=message.message_id
 	)
 
-
-def count_tables() -> str:
-	with get_session() as session:
-		lines = []
-		for table_name in ["messages", "images", "users"]:
-			count = session.execute(
-				text(f"SELECT COUNT(*) FROM {table_name}")
-			).scalar()
-			lines.append(f"{table_name}: {count} righe")
-
-		return "\n".join(lines)

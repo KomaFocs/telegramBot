@@ -2,19 +2,16 @@ import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from telegram import CallbackQuery, InlineKeyboardMarkup, Message, Update
-from telegram.constants import ChatType
 from telegram.error import BadRequest, RetryAfter
 from telegram.ext import ContextTypes
 
 from src.python_files.models.image import Image
-from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import (
 	DEFAULT_STUN_DURATION,
 	DIR,
-	MAX_TAGS_IN_MESSAGE,
 	TAG_SEPARATOR,
 )
 
@@ -28,23 +25,27 @@ def _load_tags(path: Path) -> set[str]:
 		if line.strip()
 	}
 
-
 def check_url(context: ContextTypes.DEFAULT_TYPE) -> str | None:
 	if not context.args:
 		return None
 
-	VALID_HOSTNAME = "furaffinity.net"
-	raw_url = context.args[0]
+	VALID_HOSTNAME:str = "furaffinity.net"
+	raw_url:str = context.args[0].lower()
 
-	url_to_parse = raw_url if raw_url.lower().startswith(("http://", "https://")) else f"https://{raw_url}"
+	if not raw_url.startswith(("http://", "https://")):
+		raw_url = f"https://{raw_url}"
 
-	parsed = urlparse(url_to_parse)
-	hostname = parsed.hostname.lower() if parsed.hostname else ""
+	parsed = urlparse(raw_url)
+
+	if parsed.scheme != "https":
+		parsed = parsed._replace(scheme="https")
+
+	hostname: str = parsed.hostname or ""
 
 	if hostname != VALID_HOSTNAME and not hostname.endswith(f".{VALID_HOSTNAME}"):
 		return None
 
-	return parsed._replace(scheme="https").geturl()
+	return str(urlunparse(parsed))
 
 
 async def delete_messages(message_list: list[Message], delay: int | None = None) -> None:
@@ -71,19 +72,6 @@ def get_chat_id_from_file(file: str | Path) -> int | None:
 		return None
 	return int(path.read_text(encoding="utf-8").strip())
 
-
-def format_text(submission: Submission, chat: ChatType) -> str:
-	text: str = f"{submission.image.title}\n\n"
-
-	match chat:
-		case ChatType.GROUP:
-			text += beautify_date(submission.message.scheduled_at)
-		case ChatType.CHANNEL:
-			text += TAG_SEPARATOR.join(get_filtered_tags(submission.image)[:MAX_TAGS_IN_MESSAGE])
-		case _:
-			text = "WTF"
-
-	return text
 
 
 def beautify_date(date: datetime | None) -> str:
@@ -161,23 +149,23 @@ def _clean_text(text: str, strict: bool) -> str:
 	return text
 
 
-def grassetto(text:str, strict:bool=False) -> str:
+def rendi_grassetto(text:str, strict:bool=False) -> str:
 	return f"*{_clean_text(text, strict)}*"
 
-def corsivo(text:str, strict:bool=False) -> str:
+def rendi_corsivo(text:str, strict:bool=False) -> str:
 	return f"_{_clean_text(text, strict)}_"
 
-def sottolineato(text:str, strict:bool=False) -> str:
+def rendi_sottolineato(text:str, strict:bool=False) -> str:
 	return f"__{_clean_text(text, strict)}__"
 
-def barrato(text:str, strict:bool=False) -> str:
+def rendi_barrato(text:str, strict:bool=False) -> str:
 	return f"~{_clean_text(text, strict)}~"
 
-def	codice_inline(text:str, strict:bool=False) -> str:
+def	rendi_codice_inline(text:str, strict:bool=False) -> str:
 	return f"`{_clean_text(text, strict)}`"
 
-def citazione(text:str, strict:bool=False) -> str:
+def rendi_citazione(text:str, strict:bool=False) -> str:
 	return f">{_clean_text(text, strict)}"
 
-def hyperlink(text:str, link:str, strict:bool=False) -> str:
+def rendi_hyperlink(text:str, link:str, strict:bool=False) -> str:
 	return f"[{_clean_text(text, strict)}]({link})"

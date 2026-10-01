@@ -2,7 +2,7 @@ from telegram import Update, User as TelegramUser, InlineKeyboardMarkup, InlineK
 from telegram.constants import ChatType, ParseMode
 from telegram.ext import ContextTypes
 
-from src.python_files.utils.telegram_helpers import grassetto
+from src.python_files.utils.telegram_helpers import rendi_grassetto
 
 
 async def my_id(update:Update, context:ContextTypes.DEFAULT_TYPE) -> str|None:
@@ -11,10 +11,10 @@ async def my_id(update:Update, context:ContextTypes.DEFAULT_TYPE) -> str|None:
 	if update.effective_chat.type != ChatType.CHANNEL:
 		user:TelegramUser = update.effective_user
 		response = (
-			f"Telegram ID: {grassetto(str(user.id))}\n"
-			f"Nome completo: {grassetto(user.full_name)}\n"
-			f"Soprannome: {grassetto(user.username)}\n"
-			f"Premium: {grassetto(str(user.is_premium))}\n"
+			f"Telegram ID: {rendi_grassetto(str(user.id))}\n"
+			f"Nome completo: {rendi_grassetto(user.full_name)}\n"
+			f"Soprannome: {rendi_grassetto(user.username)}\n"
+			f"Premium: {rendi_grassetto(str(user.is_premium))}\n"
 		)
 		keyboard:InlineKeyboardMarkup = InlineKeyboardMarkup([
 			[

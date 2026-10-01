@@ -15,7 +15,6 @@ from src.python_files.jobs.pre_init import pre_init
 from src.python_files.jobs.shutdown import gestisci_shutdown
 from src.python_files.utils.cooldown import stunned
 from src.python_files.config.commands_visibility import visibility
-from src.python_files.utils.decorators import error_origin
 from src.python_files.utils.fa_client import DIR
 from src.python_files.utils.log import time_log
 

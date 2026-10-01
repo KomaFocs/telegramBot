@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update
-from telegram.ext import ContextTypes, CommandHandler, Application
+from telegram.ext import ContextTypes
 
 WEB_APP_URL = "https://komafocs.github.io/telegramBot/?v=2"
 

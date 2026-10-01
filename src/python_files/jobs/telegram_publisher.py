@@ -1,5 +1,5 @@
 from telegram import Message as TelegramMessage, InlineKeyboardMarkup
-from telegram.constants import ChatType
+from telegram.constants import ChatType, ParseMode
 from telegram.ext import Application, ExtBot
 
 from src.python_files.models.dao.submission_dao import SubmissionDAO
@@ -7,8 +7,8 @@ from src.python_files.models.image import Image
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import DIR, STATUS
 from src.python_files.utils.fa_client import prepare_img_to_send
-from src.python_files.utils.telegram_helpers import get_chat_id_from_file, format_text
-from src.python_files.utils.submission_helpers import get_submission_keyboard, get_expired_keyboard, get_poll_keyboard
+from src.python_files.utils.telegram_helpers import get_chat_id_from_file
+from src.python_files.utils.submission_helpers import get_submission_keyboard, get_expired_keyboard, get_poll_keyboard, format_text
 
 
 class TelegramPublisher:
@@ -48,6 +48,7 @@ class TelegramPublisher:
 				caption=text,
 				photo=photo,
 				reply_markup=keyboard,
+				parse_mode=ParseMode.MARKDOWN_V2,
 			)
 
 			if chat_type == ChatType.GROUP:
@@ -84,7 +85,7 @@ class TelegramPublisher:
 		try:
 			domanda: str = f"{poll[0].strip('?')}?"
 			risposte: list[str] = poll[1:]
-			keyboard: InlineKeyboardMarkup | None = get_poll_keyboard(chat_type=chat_type)
+			keyboard: InlineKeyboardMarkup|None = get_poll_keyboard(chat_type=chat_type)
 
 			return await self._bot.send_poll(
 				chat_id=chat_id,

@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 from src.python_files.jobs.telegram_publisher import TelegramPublisher
 from src.python_files.utils.constants import DIR
 from src.python_files.utils.decorators import logger, single_execution
-from src.python_files.utils.telegram_helpers import codice_inline, grassetto, sottolineato
+from src.python_files.utils.telegram_helpers import rendi_codice_inline, rendi_grassetto, rendi_sottolineato
 
 
 @logger
@@ -27,9 +27,9 @@ async def poll_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Te
 
 	if not context.args:
 		msg = (
-			f"Per creare un sondaggio devi scrivere: {codice_inline('/sondaggio <domanda>')} ? {codice_inline('<risposta 1> <risposta 2>')}\n"
-			f"Esempio: {grassetto('/sondaggio dove si trova Roma? Lazio Molise Campania Piemonte')}\n\n"
-			f"Importante: se è un quiz, la prima risposta {grassetto('deve')} essere quella {sottolineato('corretta')}"
+			f"Per creare un sondaggio devi scrivere: {rendi_codice_inline('/sondaggio <domanda>')} ? {rendi_codice_inline('<risposta 1> <risposta 2>')}\n"
+			f"Esempio: {rendi_grassetto('/sondaggio dove si trova Roma? Lazio Molise Campania Piemonte')}\n\n"
+			f"Importante: se è un quiz, la prima risposta {rendi_grassetto('deve')} essere quella {rendi_sottolineato('corretta')}"
 		)
 		await update.message.reply_text(
 			text=msg,
