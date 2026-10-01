@@ -47,7 +47,7 @@ class TelegramPublisher:
 				chat_id=chat_id,
 				caption=text,
 				photo=photo,
-				reply_markup=keyboard
+				reply_markup=keyboard,
 			)
 
 			if chat_type == ChatType.GROUP:

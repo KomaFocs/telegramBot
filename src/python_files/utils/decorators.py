@@ -1,5 +1,7 @@
-import datetime
+import traceback
 from functools import wraps
+from traceback import StackSummary, FrameSummary
+from datetime import datetime
 from typing import Callable, Any
 
 from sqlalchemy.exc import IntegrityError
@@ -8,6 +10,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from src.python_files.config.database import get_session
+from src.python_files.utils.telegram_helpers import beautify_date
 
 _processing_users:set[int] = set()
 def single_execution(fallback_message:str = "⏳ Aspetta prima di inviare un altro comando!", verbose:bool = True):
@@ -43,7 +46,7 @@ def logger(function):
 		cmd:str = function.__name__.split("_")[0]
 		update:Update = args[0]
 		first_name:str = update.message.from_user.first_name
-		now = datetime.datetime.now()
+		now = datetime.now()
 		data = now.strftime("%d/%m/%Y")
 		orario = now.strftime("%H:%M:%S")
 		print(f"[{data} {orario}] {first_name} used the {cmd} command.")
@@ -76,3 +79,33 @@ def integrity_error(func:Callable[..., Any]) -> Callable[..., Any]:
 				return None
 
 	return wrapper
+
+
+def error_origin(local_only:bool = False):
+	"""local_only = True => cerca la causa dell'errore soltanto nei file utente anziché nelle librerie"""
+	def decorator(func):
+		@wraps(func)
+		async def wrapper(update:object, context:ContextTypes.DEFAULT_TYPE):
+			if context.error and context.error.__traceback__:
+				tb_list: StackSummary = traceback.extract_tb(context.error.__traceback__)
+
+				if local_only:
+					# miei file
+					frame:FrameSummary = next(
+						(frame for frame in reversed(tb_list) if "site-packages" not in frame.filename),
+						tb_list[-1]
+					)
+				else:
+					# anche librerie esterne
+					frame:FrameSummary = tb_list[-1]
+
+				print(
+					f"{beautify_date(datetime.now())}\n"
+					f"Errore originato da: '{frame.name}()'\n"
+					f"Funzione in: {frame.filename} alla riga {frame.lineno}\n"
+					f"Eccezione: {type(context.error).__name__}: {context.error}\n\n"
+				)
+
+			return await func(update, context)
+		return wrapper
+	return decorator
