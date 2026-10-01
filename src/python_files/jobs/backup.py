@@ -10,7 +10,7 @@ from src.python_files.utils.log import time_log
 async def salva_dati(app:Application | ContextTypes.DEFAULT_TYPE) -> None:
 	# app:Application = app if isinstance(app, Application) else app.application
 	backup_database(database_path=DIR.DATABASE, backup_dir=DIR.BACKUP_FILES)
-	time_log("Backup Database")
+	time_log(message="Backup Database effettuato.", show_seconds=True)
 
 
 def backup_periodico(app:Application, active:bool) -> None:

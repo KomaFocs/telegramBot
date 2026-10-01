@@ -74,9 +74,15 @@ def get_chat_id_from_file(file: str | Path) -> int | None:
 
 
 
-def beautify_date(date: datetime | None) -> str:
-	return (
+def beautify_date(date:datetime|None, show_seconds:bool=False) -> str:
+	date_string:str = (
 		date.strftime("%d/%m/%Y %H:%M")
+		if not show_seconds
+		else date.strftime("%d/%m/%Y %H:%M:%S")
+	)
+
+	return (
+		date_string
 		if date
 		else "Non programmato"
 	)
