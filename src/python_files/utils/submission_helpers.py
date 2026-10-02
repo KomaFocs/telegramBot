@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit, urlunsplit, quote
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatType
 from telegram.helpers import escape_markdown
@@ -7,7 +9,6 @@ from src.python_files.utils.constants import (
 	MAX_TAGS_IN_MESSAGE,
 	TAG_SEPARATOR, CALLBACKS, STATUS, SPIEGONE_ELIMINAZIONE,
 )
-from src.python_files.utils.cooldown import stun_bot
 from src.python_files.utils.telegram_helpers import beautify_date, get_filtered_tags, rendi_hyperlink, rendi_grassetto
 
 
@@ -16,7 +17,7 @@ def format_text(submission: Submission, chat: ChatType) -> str:
 	name_user, title, scheduled_at = [escape_markdown(str(s), version=2) for s in to_fix]
 
 	text:str = (
-		f"{rendi_grassetto(name_user)} \- {rendi_hyperlink(
+		f"{rendi_grassetto(name_user)} \\- {rendi_hyperlink(
 			text=title,
 			link=submission.image.submission_link,
 			strict=False,
@@ -146,3 +147,14 @@ def get_poll_keyboard(chat_type:ChatType) -> InlineKeyboardMarkup|None:
 			)
 		]
 	])
+
+
+def encode_url(url: str) -> str:
+	parts = urlsplit(url)
+	return urlunsplit((
+		parts.scheme,
+		parts.netloc,
+		quote(parts.path, safe="/"),
+		parts.query,
+		parts.fragment,
+	))

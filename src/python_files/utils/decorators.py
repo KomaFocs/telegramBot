@@ -81,31 +81,36 @@ def integrity_error(func:Callable[..., Any]) -> Callable[..., Any]:
 	return wrapper
 
 
-def error_origin(local_only:bool = False):
+def error_origin(local_only: bool = False):
 	"""local_only = True => cerca la causa dell'errore soltanto nei file utente anziché nelle librerie"""
+
 	def decorator(func):
 		@wraps(func)
-		async def wrapper(update:object, context:ContextTypes.DEFAULT_TYPE):
-			if context.error and context.error.__traceback__:
-				tb_list: StackSummary = traceback.extract_tb(context.error.__traceback__)
+		async def wrapper(*args, **kwargs):
+			try:
+				return await func(*args, **kwargs)
+			except Exception as exc:
+				if exc.__traceback__:
+					tb_list: traceback.StackSummary = traceback.extract_tb(exc.__traceback__)
 
-				if local_only:
-					# miei file
-					frame:FrameSummary = next(
-						(frame for frame in reversed(tb_list) if "site-packages" not in frame.filename),
-						tb_list[-1]
+					if local_only:
+						# Cerca il primo frame nei file di progetto (escludendo site-packages)
+						frame: traceback.FrameSummary = next(
+							(f for f in reversed(tb_list) if "site-packages" not in f.filename),
+							tb_list[-1]
+						)
+					else:
+						frame: traceback.FrameSummary = tb_list[-1]
+
+
+					relative_path = f"src{frame.filename.split("src")[1]}"
+					print(
+						f"[{beautify_date(datetime.now())}] "
+						f"Errore originato da: '{frame.name}()'\n"
+						f"Funzione in: {frame.filename}\n"
+						f"Riga {frame.lineno}\n"
+						f"Eccezione: {type(exc).__name__}: {exc}\n\n"
 					)
-				else:
-					# anche librerie esterne
-					frame:FrameSummary = tb_list[-1]
-
-				print(
-					f"{beautify_date(datetime.now())}\n"
-					f"Errore originato da: '{frame.name}()'\n"
-					f"Funzione in: {frame.filename} alla riga {frame.lineno}\n"
-					f"Eccezione: {type(context.error).__name__}: {context.error}\n\n"
-				)
-
-			return await func(update, context)
+				raise exc
 		return wrapper
 	return decorator

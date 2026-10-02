@@ -210,5 +210,5 @@ class JobQueue:
 		)
 
 		for s in queue:
-			if not s.message.sent_in_group:
+			if not s.group_message_id:
 				await self._publisher.send_submission(s, ChatType.GROUP)

@@ -2,12 +2,14 @@ import asyncio
 import random
 
 from telegram import Message as TelegramMessage, Update
-from telegram.constants import ChatAction, ChatType
+from telegram.constants import ChatAction, ChatType, ParseMode
 from telegram.ext import ContextTypes
 
 from src.python_files.models.dao.submission_dao import SubmissionDAO
 from src.python_files.utils.constants import PAROLA, DIR
+from src.python_files.utils.decorators import error_origin
 from src.python_files.utils.filters import get_from_file
+from src.python_files.utils.submission_helpers import format_text, encode_url
 
 
 def _log(message: str) -> None:
@@ -75,4 +77,3 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 		text=response,
 		reply_to_message_id=message.message_id
 	)
-
