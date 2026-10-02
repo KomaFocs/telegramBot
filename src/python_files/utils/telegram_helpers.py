@@ -148,8 +148,8 @@ def get_spiegone() -> str:
 	)
 
 
+_MARKDOWN_TRANSLATE_TABLE= str.maketrans("", "", "*_~`>")
 def _clean_text(text: str, strict: bool) -> str:
-	_MARKDOWN_TRANSLATE_TABLE= str.maketrans("", "", "*_~`>")
 	if strict:
 		return text.translate(_MARKDOWN_TRANSLATE_TABLE)
 	return text

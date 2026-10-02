@@ -47,6 +47,7 @@ class Submission:
 
 	@property
 	def name_user(self):
+		"""Restituisce il display_name dell'utente; se non lo trova, restituisce lo username"""
 		return (
 			self.user.display_name
 			if self.user.display_name

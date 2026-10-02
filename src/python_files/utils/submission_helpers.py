@@ -7,13 +7,17 @@ from src.python_files.utils.constants import (
 	MAX_TAGS_IN_MESSAGE,
 	TAG_SEPARATOR, CALLBACKS, STATUS, SPIEGONE_ELIMINAZIONE,
 )
-from src.python_files.utils.telegram_helpers import beautify_date, get_filtered_tags, rendi_hyperlink
+from src.python_files.utils.cooldown import stun_bot
+from src.python_files.utils.telegram_helpers import beautify_date, get_filtered_tags, rendi_hyperlink, rendi_grassetto
 
 
 def format_text(submission: Submission, chat: ChatType) -> str:
+	to_fix = [submission.name_user, submission.image.title, beautify_date(submission.scheduled_at)]
+	name_user, title, scheduled_at = [escape_markdown(str(s), version=2) for s in to_fix]
+
 	text:str = (
-		f"{rendi_hyperlink(
-			text=submission.image.title,
+		f"{rendi_grassetto(name_user)} \- {rendi_hyperlink(
+			text=title,
 			link=submission.image.submission_link,
 			strict=False,
 		)}\n\n"
@@ -21,13 +25,15 @@ def format_text(submission: Submission, chat: ChatType) -> str:
 
 	match chat:
 		case ChatType.GROUP:
-			text += f"Previsto per: {beautify_date(submission.message.scheduled_at)}"
+			text += f"Previsto per: {scheduled_at}"
 		case ChatType.CHANNEL:
-			text += TAG_SEPARATOR.join(get_filtered_tags(submission.image)[:MAX_TAGS_IN_MESSAGE])
+			tags:list[str] = get_filtered_tags(submission.image)[:MAX_TAGS_IN_MESSAGE]
+			escaped_tags:list[str] = [escape_markdown(str(tag), version=2) for tag in tags]
+			text += TAG_SEPARATOR.join(escaped_tags)
 		case _:
-			text = "WTF"
+			text += ""
 
-	return escape_markdown(text=text, version=2)
+	return text
 
 
 def get_channel_keyboard(submission:Submission) -> InlineKeyboardMarkup|None:
