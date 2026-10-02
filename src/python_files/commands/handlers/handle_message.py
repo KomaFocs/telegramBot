@@ -63,7 +63,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 		allowed_ids = get_from_file(DIR.SECRETS / "id.txt")
 		if user_id not in allowed_ids:
 			return
-		SubmissionDAO.reset_all()
+		SubmissionDAO.reset_pending_group_submissions()
 	else:
 		response = f"errore. non c'è \"{PAROLA}\" nel messaggio.".upper()
 

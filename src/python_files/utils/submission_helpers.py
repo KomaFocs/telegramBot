@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatType
+from telegram.helpers import escape_markdown
 
 from src.python_files.models.submission import Submission
 from src.python_files.utils.constants import (
@@ -24,7 +25,7 @@ def format_text(submission: Submission, chat: ChatType) -> str:
 		case _:
 			text = "WTF"
 
-	return text
+	return escape_markdown(text=text, version=2)
 
 
 def get_channel_keyboard(submission:Submission) -> InlineKeyboardMarkup|None:

@@ -10,4 +10,4 @@ def time_log(message:str, timestamp:str=None, show_seconds:bool=False) -> None:
 		print(f"[{timestamp}]: {message}")
 
 	except Exception as e:
-		print(e)
+		print(f"time_log error: {e}")
