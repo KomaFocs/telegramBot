@@ -11,10 +11,12 @@ from src.python_files.utils.telegram_helpers import beautify_date, get_filtered_
 
 
 def format_text(submission: Submission, chat: ChatType) -> str:
-	text:str = rendi_hyperlink(
-		text=f"{submission.image.title}\n\n",
-		link=submission.image.submission_link,
-		strict=False
+	text:str = (
+		f"{rendi_hyperlink(
+			text=submission.image.title,
+			link=submission.image.submission_link,
+			strict=False,
+		)}\n\n"
 	)
 
 	match chat:
